@@ -1,0 +1,123 @@
+﻿@model Melody.Models.OrderDetailsVM
+
+@{
+    ViewBag.Title = "Order Details";
+}
+
+<link rel="stylesheet" href="~/css/order-details.css" />
+
+<div class="order-details-container">
+
+    <h2>📦 Order Details</h2>
+
+    <!-- ================= ORDER INFO ================= -->
+    <div class="order-info">
+        <p><strong>Order #:</strong> @Model.Order.OrderNumber</p>
+        <p><strong>Date:</strong> @Model.Order.CreatedAt.ToLocalTime()</p>
+        <p>
+            <strong>Status:</strong>
+            <span class="order-status status-@Model.Order.Status.ToLower()">
+                @Model.Order.Status
+            </span>
+        </p>
+        <p><strong>Total:</strong> RM @Model.Order.Total.ToString("F2")</p>
+        <p><strong>Shipping Address:</strong> @Model.Order.ShippingAddress</p>
+        <p><strong>Phone:</strong> @Model.Order.ShippingPhone</p>
+    </div>
+
+    <hr />
+
+    <!-- ================= ITEMS ================= -->
+    <h3>🛒 Items</h3>
+
+    <table class="order-items-table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Unit Price</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>
+                        @item.Product?.Name
+                    </td>
+                    <td>@item.Quantity</td>
+                    <td>RM @item.UnitPrice.ToString("F2")</td>
+                    <td>RM @(item.Quantity* item.UnitPrice)</td>
+                </tr>
+            }
+        </tbody>
+
+    </table>
+
+    <hr />
+
+    <!-- ================= REFUND SECTION ================= -->
+    @* Refund in progress *@
+    @if (Model.Order.Status == "Refunding")
+    {
+        <div class="refund-card refund-pending">
+            <div class="refund-icon">🔄</div>
+            <div class="refund-content">
+                <strong>Refund in progress</strong>
+                <p>Your refund request has been received and is being reviewed.</p>
+            </div>
+        </div>
+    }
+    @* Refund approved *@
+    else if (Model.Order.Status == "Refunded")
+    {
+        <div class="refund-card refund-approved">
+            <div class="refund-icon">✅</div>
+            <div class="refund-content">
+                <strong>Refund approved</strong>
+                <p>Your refund has been successfully processed.</p>
+            </div>
+        </div>
+    }
+    @* Refund rejected *@
+    else if (Model.Order.Status == "RefundRejected")
+    {
+        <div class="refund-card refund-rejected">
+            <div class="refund-icon">❌</div>
+            <div class="refund-content">
+                <strong>Refund rejected</strong>
+                <p>@Model.Order.Notes</p>
+            </div>
+        </div>
+    }
+    @* Can request refund *@
+    else
+    {
+        <div class="refund-request-card">
+            <h3>🔁 Request a Refund</h3>
+            <p class="refund-hint">
+                If there is an issue with your order, you may submit a refund request.
+            </p>
+
+            <form asp-action="RequestRefund" method="post">
+                <input type="hidden" name="OrderId" value="@Model.Order.Id" />
+
+                <textarea name="Reason"
+                      required
+                      placeholder="Please describe the reason for your refund request"></textarea>
+
+                <div class="refund-actions">
+                    <button type="submit" class="refund-submit-btn">
+                        Submit Refund Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    }
+
+    <a href="/Orders/MyOrders" class="back-link">
+        ← Back to My Orders
+    </a>
+</div>

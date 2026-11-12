@@ -1,0 +1,109 @@
+﻿@model Melody.Models.AppointmentVM
+
+@{
+    ViewBag.Title = "Create New Appointment";
+    var members = ViewBag.Members;
+    var services = ViewBag.Services;
+    var categories = ViewBag.Categories;
+}
+
+<h2>Create New Appointment</h2>
+
+<form asp-action="AdminCreateAppointment" method="post" class="AdminCreateAppointForm">
+    @Html.AntiForgeryToken()
+
+    <!-- Member -->
+    <div>
+        <label>Member</label>
+        <select id="memberSelect" name="CustomerEmail" class="form-control">
+            <option value="">-- Select Member --</option>
+            @foreach (var m in members)
+            {
+                <option value="@m.Email">@m.Name (@m.Email)</option>
+            }
+        </select>
+    </div>
+
+    <!-- Pet -->
+    <div>
+        <label>Pet</label>
+        <select id="petSelect" name="PetId" class="form-control" required>
+            <option value="">-- Select Pet --</option>
+        </select>
+    </div>
+
+    <!-- Category -->
+    <div>
+        <label>Category</label>
+        <select id="categorySelect" class="form-control">
+            <option value="">-- Select Category --</option>
+            @foreach (var c in categories)
+            {
+                <option value="@c">@c</option>
+            }
+        </select>
+    </div>
+
+    <!-- Service -->
+    <div>
+        <label>Service</label>
+        <select id="serviceSelect" name="ServiceId" class="form-control">
+            <option value="">-- Select Service --</option>
+        </select>
+    </div>
+
+    <!-- Date -->
+    <div>
+        <label>Date & Time</label>
+        <input type="datetime-local" asp-for="Date" class="form-control" min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
+    </div>
+    <!-- Notes -->
+
+    <div>
+        <label for="Notes">Notes</label>
+        <textarea asp-for="Notes" class="form-control" placeholder="Optional notes..."></textarea>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn-create">Create</button>
+        <a asp-action="AdminViewAppointment" class="btn-cancel">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        const members = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Members));
+        const services = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Services));
+
+        // Member -> Pet
+        document.getElementById('memberSelect').addEventListener('change', function() {
+            const email = this.value;
+            const petSelect = document.getElementById('petSelect');
+            petSelect.innerHTML = '<option value="">-- Select Pet --</option>';
+
+            const member = members.find(m => m.Email === email);
+            if (!member) return;
+
+            member.Pets.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.Id;
+                opt.text = `${p.Name} (${p.Type})`;
+                petSelect.appendChild(opt);
+            });
+        });
+
+        // Category -> Service
+        document.getElementById('categorySelect').addEventListener('change', function() {
+            const cat = this.value;
+            const serviceSelect = document.getElementById('serviceSelect');
+            serviceSelect.innerHTML = '<option value="">-- Select Service --</option>';
+
+            services.filter(s => s.Category === cat).forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.Id;
+                opt.text = `${s.Name} (RM${s.Price.toFixed(2)})`;
+                serviceSelect.appendChild(opt);
+            });
+        });
+    </script>
+}

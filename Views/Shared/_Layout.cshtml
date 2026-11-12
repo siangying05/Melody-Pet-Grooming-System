@@ -1,0 +1,248 @@
+﻿@inject MelodyDB db
+
+@using System.Security.Claims
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>@ViewBag.Title</title>
+    <link rel="shortcut icon" href="/images/Melody.png">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" href="/css/app.css" asp-append-version="true">
+    <link rel="stylesheet" href="/css/Services.css" asp-append-version="true">
+    @RenderSection("head", false)
+</head>
+<body>
+    <div class="loader">
+        <div class="loader-spinner"></div>
+    </div>
+
+    <div class="page-container">
+        <header class="site-header">
+            <div class="header-container">
+                <div class="logo-section">
+                    <img src="/images/Melody.png" alt="Melody Logo" class="logo">
+                    <div class="brand-text">
+                        <h1><a href="/" class="brand-link">Melody</a></h1>
+                        <p class="brand-tagline">Professional Pet Grooming</p>
+                    </div>
+                </div>
+                <div class="header-contact">
+                    <div class="contact-item">
+                        <span class="contact-icon">📞</span>
+                        <span>(123) 456-7890</span>
+                    </div>
+                    <div class="contact-item">
+                        <span class="contact-icon">⏰</span>
+                        <span>Mon-Sat: 8AM-8PM</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <nav class="main-nav">
+            <div class="nav-container">
+                <button class="nav-toggle" aria-label="Toggle navigation">
+                    <span class="hamburger"></span>
+                </button>
+                
+                <div class="nav-links">
+                    @if (User.Identity!.IsAuthenticated && User.IsInRole("Admin"))
+                    {
+                        <a asp-controller="Admin" asp-action="Users" class="nav-link">
+                            <span class="nav-icon">👥</span>
+                            Users
+                        </a>
+                    }
+                        <a href="/" class="nav-link">
+                            <span class="nav-icon">🏠</span>
+                            Home
+                        </a>
+
+                    <a asp-controller="Service" asp-action="Services" class="nav-link">
+                        <span class="nav-icon">✨</span>
+                        Services
+                    </a>
+                    @if (User.Identity!.IsAuthenticated && User.IsInRole("Admin"))
+                    {
+                        <a asp-controller="ManageProducts" asp-action="Index" class="nav-link">
+                            <span class="nav-icon">📦</span>
+                            Product
+                        </a>
+                        <a asp-controller="AdminOrders" asp-action="Index" class="nav-link">
+                            <span class="nav-icon">🧾</span>
+                            Order
+                        </a>
+                    }
+
+
+                    @if (User.Identity!.IsAuthenticated && User.IsInRole("Admin"))
+                    {
+                        <a asp-controller="Appointment" asp-action="AdminViewAppointment" class="nav-link">
+                            <span class="nav-icon">📅</span>
+                            Appointment
+                        </a>
+                    }
+                    else 
+                    {
+                        <a asp-controller="Product" asp-action="Index" class="nav-link">
+                            <span class="nav-icon">🛍️</span>
+                            Shop
+                        </a>
+                        @if (User.Identity!.IsAuthenticated && User.IsInRole("Member"))
+                        {
+                            <a asp-controller="Cart" asp-action="Index" class="nav-link">
+                                <span class="nav-icon">🛒</span>
+                                Shopping Cart
+                            </a>
+                            <a asp-controller="/Wishlist" asp-action="Index" class="nav-link">
+                                <span class="nav-icon">♥</span>
+                                Wishlist
+                            </a>
+
+                        }
+                    }
+                    <a asp-controller="Home" asp-action="About" class="nav-link">
+                        <span class="nav-icon">ℹ️</span>
+                        About Us
+                    </a>
+                </div>
+                <div class="nav-auth">
+                    @if (User.Identity!.IsAuthenticated)
+                    {
+                        <div class="user-info-display">
+                            <span class="user-name-display">@User.Identity.Name |</span>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <span class="role-badge admin">Admin</span>
+                            }
+                            @if (User.IsInRole("Member"))
+                            {
+                                <span class="role-badge member">Member</span>
+                            }
+                        </div>
+                        <div class="user-dropdown">
+                            <div class="user-avatar">
+                                @if (User.IsInRole("Member"))
+                                {
+                                    var member = db.Members.Find(User.Identity!.Name);
+                                    var photoURL = member?.PhotoURL;
+                                    if (!string.IsNullOrEmpty(photoURL))
+                                    {
+                                        <img src="/photos/@photoURL" alt="@User.Identity.Name">
+                                    }
+                                    else
+                                    {
+                                        <img src="/images/default-avatar.png" alt="@User.Identity.Name">
+                                    }
+                                }
+                                else
+                                {
+                                    <img src="/images/default-avatar.png" alt="@User.Identity.Name">
+                                }
+                            </div>
+                            <div class="dropdown-menu">
+                                <div class="user-details">
+                                    <span class="user-name">@User.Identity.Name</span>
+                                    <span class="user-email">@User.FindFirst(ClaimTypes.Email)?.Value</span>
+                                </div>
+                                <a asp-controller="Account" asp-action="Profile" class="dropdown-item">
+                                    <span class="nav-icon">👤</span> My Profile
+                                </a>
+                                <a asp-controller="Appointment" asp-action="MyAppointments" class="dropdown-item">
+                                    <span class="nav-icon">📅</span> My Appointments
+                                </a>
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="logout-form">
+                                    <button type="submit" class="dropdown-item logout-btn">
+                                        <span class="nav-icon">🚪</span> Logout
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Login" class="login-btn">
+                            <span class="nav-icon">🔐</span>
+                            <span class="btn-text">Login / Register</span>
+                        </a>
+                    }
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            @if (TempData.Peek("Info") != null)
+            {
+                <div class="alert-info">
+                    @TempData["Info"]
+                </div>
+            }
+
+            @if (TempData.Peek("Error") != null)
+            {
+                <div class="alert-danger">
+                    @TempData["Error"]
+                </div>
+            }
+            @RenderBody()
+        </main>
+
+        <footer class="site-footer">
+            <div class="footer-container">
+                <div class="footer-section">
+                    <div class="footer-brand">
+                        <img src="/images/Melody.png" alt="Melody Logo" class="footer-logo">
+                        <h3>Melody Pet Grooming</h3>
+                        <p>Where pets get the care they deserve</p>
+                    </div>
+                    <div class="social-links">
+                        <a href="#" class="social-link" aria-label="Facebook">📘</a>
+                        <a href="#" class="social-link" aria-label="Instagram">📷</a>
+                        <a href="#" class="social-link" aria-label="Twitter">🐦</a>
+                        <a href="#" class="social-link" aria-label="YouTube">📺</a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <a href="/">Home</a>
+                    <a href="/Services">Services</a>
+                    <a href="/Appointment/Create">Book Now</a>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Services</h4>
+                    <a href="#">Dog Grooming</a>
+                    <a href="#">Cat Grooming</a>
+                    <a href="#">Spa Packages</a>
+                    <a href="#">Emergency Care</a>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Contact Info</h4>
+                    <div class="contact-info">
+                        <p>📌 123 Pet Street, Animal City</p>
+                        <p>📞 (123) 456-7890</p>
+                        <p>📧 info@melodypets.com</p>
+                        <p>⏰ Mon-Sat: 8AM-8PM</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; @DateTime.Now.Year Melody Pet Grooming. All rights reserved.</p>
+                <div class="footer-links">
+                    <a href="/Privacy">Privacy Policy</a>
+                    <a href="/Terms">Terms of Service</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="/js/app.js" asp-append-version="true"></script>
+    
+    @RenderSection("scripts", false)
+</body>
+</html>

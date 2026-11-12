@@ -1,0 +1,67 @@
+﻿@model RegisterVM
+
+@{
+    ViewBag.Title = "Account Register";
+}
+
+<a asp-controller="Account" asp-action="Login" class="Back">Back to Login</a>
+<form class="form" method="post" enctype="multipart/form-data">
+    <div asp-validation-summary="ModelOnly"></div>
+
+    <label asp-for="Email"></label>
+    <input asp-for="Email" autofocus>
+    <span asp-validation-for="Email"></span>
+
+    <label asp-for="Password"></label>
+    <input asp-for="Password">
+    <span asp-validation-for="Password"></span>
+
+    <label asp-for="Confirm"></label>
+    <input asp-for="Confirm">
+    <span asp-validation-for="Confirm"></span>
+
+    <label asp-for="Name"></label>
+    <input asp-for="Name">
+    <span asp-validation-for="Name"></span>
+
+    <label asp-for="Photo"></label>
+    <label class="upload">
+        <small>Select Photo...</small>
+        <input asp-for="Photo" id="photoInput" accept="image/jpeg,image/png" hidden>
+        <img id="photoPreview" src="#" alt="Preview" style="display:none; max-width:150px; margin-top:10px;" />
+    </label>
+    <span asp-validation-for="Photo"></span>
+
+    <section>
+        <button>Register</button>
+        <button type="reset">Reset</button>
+    </section>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const photoInput = document.getElementById('photoInput');
+        const photoPreview = document.getElementById('photoPreview');
+
+        if (!photoInput || !photoPreview) return;
+
+        photoInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file (JPG/PNG).');
+                e.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                photoPreview.src = ev.target.result;
+                photoPreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+</script>
+

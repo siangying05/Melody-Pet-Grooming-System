@@ -1,0 +1,44 @@
+﻿@model List<Melody.Models.Order>
+
+@if (!Model.Any())
+{
+    <div class="myorders-empty">
+        No orders found.
+    </div>
+}
+else
+{
+    <table class="myorders-table">
+        <thead>
+            <tr>
+                <th>Order #</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var o in Model)
+            {
+                <tr>
+                    <td><strong>@o.OrderNumber</strong></td>
+                    <td>@o.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd")</td>
+                    <td>
+                        <span class="order-status status-@o.Status.ToLower()">
+                            @o.Status
+                        </span>
+                    </td>
+                    <td>RM @o.Total.ToString("F2")</td>
+                    <td>
+                        <a asp-action="Details"
+                           asp-route-id="@o.Id"
+                           class="myorders-view-btn">
+                            View
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

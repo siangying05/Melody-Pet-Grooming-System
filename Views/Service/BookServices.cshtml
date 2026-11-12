@@ -1,0 +1,59 @@
+﻿@model Melody.Models.AppointmentVM
+
+@{
+    ViewBag.Title = "Book Appointment";
+}
+
+<p class="bookServiceH2">Book Appointment</p>
+
+@if (TempData["ModelErrors"] != null)
+{
+    <div class="text-danger">
+        @TempData["ModelErrors"]
+    </div>
+}
+
+<div class="bookServicesCss">
+    @if (ViewBag.UserPets == null || ViewBag.UserPets.Count == 0)
+    {
+        <p>
+            You have no pets yet.
+            <a asp-controller="Pets" asp-action="Create">Add a pet first</a> to book this service.
+        </p>
+    }
+    else
+    {
+
+        <p class="BookServiceDesc">Service: @Model.ServiceName</p>
+        <p class ="BookServiceDesc">Price: RM @Model.Price</p>
+        <p class="BookServiceDesc">Duration: @Model.Duration minutes</p>
+
+        <form asp-controller="Service" asp-action="BookServicesPost" method="post">
+            <input type="hidden" asp-for="ServiceId" />
+
+            <div class="form-group">
+                <label asp-for="PetId">Select Pet:</label>
+                <select asp-for="PetId" class="form-control">
+                    <option value="" >-- Select your pet --</option>
+                    @foreach (var pet in ViewBag.UserPets)
+                    {
+                        <option value="@pet.Id">@pet.Name (@pet.Type)</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Date">Date & Time:</label>
+                <input type="datetime-local" asp-for="Date" class="form-control"
+                       min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Notes">Notes:</label>
+                <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-2">Confirm Booking</button>
+        </form>
+    }
+</div>

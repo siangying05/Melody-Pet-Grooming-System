@@ -1,0 +1,121 @@
+﻿@model Melody.Models.CheckoutVM
+@{
+    ViewBag.Title = "Checkout";
+    Layout = "_Layout";   
+    bool success = ViewBag.Success ?? false;
+}
+
+@if (success)
+{
+    <div class="checkout-container checkout-success">
+        <h2>✅ Order Placed Successfully</h2>
+        <p>Thank you for your purchase.</p>
+
+        <a asp-controller="Product"
+           asp-action="Index"
+           class="btn-small">
+            Continue Shopping
+        </a>
+
+        <a asp-controller="Orders"
+           asp-action="MyOrders"
+           class="btn-small">
+            View My Orders
+        </a>
+    </div>
+}
+else
+{
+    <div class="checkout-container">
+
+        <div class="checkout-title">🧾 Checkout</div>
+        <form method="post" action="/Payment/Payment">
+
+            <!-- ================= CUSTOMER INFO ================= -->
+            <div class="checkout-section">
+                <h3>Customer Information</h3>
+
+                <div class="checkout-form-group">
+                    <label>Full Name</label>
+                    <input asp-for="FullName" required />
+                </div>
+
+                <div class="checkout-form-group">
+                    <label>Phone</label>
+                    <input asp-for="Phone" required />
+                </div>
+            </div>
+
+            <!-- ================= SHIPPING ================= -->
+            <div class="checkout-section">
+                <h3>Shipping Address</h3>
+
+                <div class="checkout-form-group">
+                    <label>Address Line</label>
+                    <input asp-for="AddressLine" required />
+                </div>
+
+                <div class="checkout-address-grid">
+                    <div class="checkout-form-group">
+                        <label>City</label>
+                        <input asp-for="City" required />
+                    </div>
+
+                    <div class="checkout-form-group">
+                        <label>Postcode</label>
+                        <input asp-for="Postcode" required />
+                    </div>
+
+                    <div class="checkout-form-group">
+                        <label>State</label>
+                        <input asp-for="State" required />
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= PAYMENT OPTION ================= -->
+            <div class="checkout-section">
+                <h3>Payment Method</h3>
+
+                <label>
+                    <input type="radio" asp-for="PaymentMethod" value="CreditCard" required />
+                    Credit / Debit Card
+                </label>
+
+                <label>
+                    <input type="radio" asp-for="PaymentMethod" value="OnlineBanking" />
+                    Online Banking
+                </label>
+
+                <label>
+                    <input type="radio" asp-for="PaymentMethod" value="CashOnDelivery" />
+                    Cash On Delivery
+                </label>
+            </div>
+
+            <!-- ================= SUMMARY ================= -->
+            <div class="checkout-section checkout-summary">
+                <h3>Order Summary</h3>
+
+                @foreach (var item in Model.Items)
+                {
+                    <div class="checkout-summary-row">
+                        <span>@item.ProductName x @item.Quantity</span>
+                        <span>RM @item.Total.ToString("F2")</span>
+                    </div>
+                }
+
+                <div class="checkout-summary-total">
+                    <span>Total</span>
+                    <span>RM @Model.GrandTotal.ToString("F2")</span>
+                </div>
+            </div>
+
+            <button type="submit"
+                    style="padding:12px 20px; background:#4f46e5; color:white; border:none; border-radius:6px;">
+                Continue to Payment
+            </button>
+
+        </form>
+    </div>
+}

@@ -1,0 +1,46 @@
+﻿@model List<Melody.Models.Order>
+
+@if (!Model.Any())
+{
+    <div style="text-align:center;padding:40px;color:#6b7280">
+        No orders found for this status.
+    </div>
+}
+else
+{
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Order #</th>
+                <th>Customer</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>Created</th>
+                <th style="text-align:right">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var o in Model)
+            {
+                <tr>
+                    <td><strong>@o.OrderNumber</strong></td>
+                    <td>@o.CustomerEmail</td>
+                    <td>
+                        <span class="status-badge status-@o.Status.ToLower()">
+                            @o.Status
+                        </span>
+                    </td>
+                    <td>RM @o.Total.ToString("F2")</td>
+                    <td>@o.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                    <td style="text-align:right">
+                        <a class="admin-btn btn-view"
+                           asp-action="Details"
+                           asp-route-id="@o.Id">
+                            View Details
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

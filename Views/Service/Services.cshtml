@@ -1,0 +1,147 @@
+﻿@model Dictionary<string, List<Service>>
+
+@{
+    ViewBag.Title = "Service";
+    var fields = new List<string> { "Service Name", "Price (RM)" };
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div id="notification" class="notificationSuccess">
+        @TempData["SuccessMessage"]
+    </div>
+
+    <script>
+        setTimeout(function() {
+            var note = document.getElementById('notification');
+            if(note) note.style.display = 'none';
+        }, 5000);
+    </script>
+}
+
+
+<div class="service-header">
+    <p class="mb-4">
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-controller="Service" asp-action="AddServices" class="btn-book1">+ Add New Service</a>
+        }
+        else
+        {
+            @:Our Services
+        }
+    </p>
+
+    <div class="category-links">
+        <a href="?name=@ViewBag.Name" class="category-btn @(string.IsNullOrEmpty(ViewBag.Category) ? "selected" : "")">All</a>
+        @foreach (var c in ViewBag.AllCategories)
+        {
+            <a href="?name=@ViewBag.Name&category=@c" class="category-btn @(c == ViewBag.Category ? "selected" : "")">@c</a>
+        }
+    </div>
+
+    <form method="get" class="service-search-form">
+        <input type="search" name="name" value="@ViewBag.Name" placeholder="Search services" />
+        <button type="submit">Search</button>
+    </form>
+</div>
+
+@foreach (var group in Model.OrderBy(g => g.Key))
+{
+    <h4 class="category-title">@group.Key</h4>
+
+    <table class="service-table">
+        <thead>
+            <tr>
+                <th>No</th>
+                @foreach (var f in fields)
+                {
+                    string sortField = f switch
+                    {
+                        "Service Name" => "name",
+                        "Price (RM)" => "price",
+                        _ => ""
+                    };
+
+                    string d = "asc";
+                    string c = "";
+
+                    if (sortField == (ViewBag.Sort ?? "name"))
+                    {
+                        d = ViewBag.Dir == "asc" ? "desc" : "asc";
+                        c = ViewBag.Dir;
+                    }
+
+                    <th>
+                        <a href="?name=@ViewBag.Name&category=@ViewBag.Category&sort=@sortField&dir=@d" class="@c" style="color: inherit; text-decoration: none;">
+                            @f
+                            @if (sortField == (ViewBag.Sort ?? "name"))
+                            {
+                                <span>@(ViewBag.Dir == "asc" ? "▲" : "▼")</span>
+                            }
+                        </a>
+                    </th>
+                }
+
+                <th>Duration (min)</th>
+
+                @if (User.IsInRole("Member"))
+                {
+                    <th>Book Appointment</th>
+                }
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <th>Action</th>
+                }
+            </tr>
+        </thead>
+
+        <tbody>
+            @{
+                int no = 1;
+            }
+
+            @foreach (var s in group.Value)
+            {
+                <tr>
+                    <td>@no</td>
+                    <td>@s.Name</td>
+                    <td>@s.Price.ToString("0.00")</td>
+                        <td>@s.Duration</td>
+
+
+                    @if (User.IsInRole("Member"))
+                    {
+                        <td>
+                            <a asp-controller="Service" asp-action="BookServices" asp-route-serviceId="@s.Id" class="btn-book">
+                                Book Now
+                            </a>
+                        </td>
+                    }
+
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <td>
+                            <a asp-controller="Service" asp-action="EditServices" asp-route-id="@s.Id" class="btn-edit">Edit</a>
+                            <form asp-controller="Service"
+                                  asp-action="DeleteServicesPost"
+                                  method="post"
+                                  style="display:inline;"
+                                  onsubmit="return confirm('Are you sure want to delete?');">
+
+                                <input type="hidden" name="id" value="@s.Id" />
+
+                                <button type="submit" class="btn-delete">
+                                    Delete
+                                </button>
+                            </form>
+
+                        </td>
+                    }
+                </tr>
+                no++;
+            }
+        </tbody>
+    </table>
+}

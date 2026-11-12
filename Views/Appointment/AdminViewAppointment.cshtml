@@ -1,0 +1,209 @@
+﻿@model List<Melody.Models.AppointmentVM>
+
+@{
+    ViewBag.Title = "All Member Appointments";
+
+    var requestingAppointments = Model
+        .Where(a => a.Status != null && a.Status.ToLower() == "requesting")
+        .OrderBy(a => a.Date)
+        .ToList();
+
+    var pendingAppointments = Model
+        .Where(a => a.Status != null && a.Status.ToLower() == "pending")
+        .OrderBy(a => a.Date)
+        .ToList();
+
+    var successfulAppointments = Model
+        .Where(a => a.Status != null && a.Status.ToLower() == "successful")
+        .OrderByDescending(a => a.Date)
+        .ToList();
+
+
+    var declinedAppointments = Model
+        .Where(a => a.Status != null && a.Status.ToLower() == "declined")
+        .OrderByDescending(a => a.Date)
+        .ToList();
+}
+
+<p class="appoint-title">All Member Appointments
+    <div class="admin-create-button">
+        <a asp-controller="Appointment" asp-action="AdminCreateAppointment" class="btn-create">
+            + Create New Appointment
+        </a>
+
+        <a asp-controller="Appointment"
+           asp-action="Calendar"
+           class="btn btn-create">
+            📅 Calendar View
+        </a>
+    </div>
+</p>
+
+
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div id="notification" class="notificationSuccess">
+        @TempData["SuccessMessage"]
+    </div>
+    <script>
+        setTimeout(function() {
+            var note = document.getElementById('notification');
+            if(note) note.style.display = 'none';
+        }, 5000);
+    </script>
+}
+
+@if (!Model.Any())
+{
+    <p class="no-appointments">No appointments found.</p>
+}
+else
+{
+    @* Requesting *@
+    @if (requestingAppointments.Any())
+    {
+        <h3 class="group-title requesting">Requesting</h3>
+        <div class="appointments-container">
+            @foreach (var a in requestingAppointments)
+            {
+                <div class="appointment-card status-requesting">
+                    <div class="appointment-header">
+                        <span class="service-name">@a.ServiceName</span>
+                        <span class="status">@a.Status</span>
+                    </div>
+                    <div class="appointment-body">
+                        <div><strong>Member:</strong> @a.CustomerEmail</div>
+                        <div><strong>Pet:</strong> @a.PetName</div>
+                        <div><strong>Date:</strong> @a.Date?.ToString("dd.MM.yyyy")</div>
+                        <div><strong>Time:</strong> @a.Date?.ToString("HH:mm")</div>
+                        @if (!string.IsNullOrEmpty(a.Notes))
+                        {
+                            <div><strong>Notes:</strong> @a.Notes</div>
+                        }
+                    </div>
+                    <div class="appointment-actions">
+                        <form asp-action="AcceptAppointment" method="post" style="display:inline-block;">
+                            <input type="hidden" name="id" value="@a.Id" />
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn-accept">Accept</button>
+                        </form>
+                        <form asp-action="DeclineAppointment" method="post" style="display:inline-block; margin-left:5px;">
+                            <input type="hidden" name="id" value="@a.Id" />
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn-decline">Decline</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @* Pending *@
+    @if (pendingAppointments.Any())
+    {
+        <h3 class="group-title pending">Pending</h3>
+        <div class="appointments-container">
+            @foreach (var a in pendingAppointments)
+            {
+                <div class="appointment-card status-pending">
+                    <div class="appointment-header">
+                        <span class="service-name">@a.ServiceName</span>
+                        <span class="status">@a.Status</span>
+                    </div>
+                    <div class="appointment-body">
+                        <div><strong>Member:</strong> @a.CustomerEmail</div>
+                        <div><strong>Pet:</strong> @a.PetName</div>
+                        <div><strong>Date:</strong> @a.Date?.ToString("dd.MM.yyyy")</div>
+                        <div><strong>Time:</strong> @a.Date?.ToString("HH:mm")</div>
+                        @if (!string.IsNullOrEmpty(a.Notes))
+                        {
+                            <div><strong>Notes:</strong> @a.Notes</div>
+                        }
+                        <div class="pending-action">
+                        <form asp-action="DeleteAppointment" method="post"
+                              onsubmit="return confirm('Delete this appointment?');">
+                            <input type="hidden" name="id" value="@a.Id" />
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn-pending-trash">Cancel</button>
+                        </form>
+                            <a asp-action="AdminEditAppointment"
+                               asp-route-id="@a.Id"
+                               class="btn-edit-APA">
+                                Edit
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @* Successful *@
+    @if (successfulAppointments.Any())
+    {
+        <h3 class="group-title successful">Successful</h3>
+        <div class="appointments-container">
+            @foreach (var a in successfulAppointments)
+            {
+                <div class="appointment-card status-successful">
+                    <div class="appointment-header">
+                        <span class="service-name">@a.ServiceName</span>
+                        <span class="status">Successful</span>
+                    </div>
+                    <div class="appointment-body">
+                        <div><strong>Member:</strong> @a.CustomerEmail</div>
+                        <div><strong>Pet:</strong> @a.PetName</div>
+                        <div><strong>Date:</strong> @a.Date?.ToString("dd.MM.yyyy")</div>
+                        <div><strong>Time:</strong> @a.Date?.ToString("HH:mm")</div>
+                        @if (!string.IsNullOrEmpty(a.Notes))
+                        {
+                            <div><strong>Notes:</strong> @a.Notes</div>
+                        }
+                        <div class="appointment-actions">
+                            <form asp-action="DeclineAppointment" method="post" style="display:inline-block; margin-left:5px;">
+                                <input type="hidden" name="id" value="@a.Id" />
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn-decline-success">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @* Declined *@
+    @if (declinedAppointments.Any())
+    {
+        <h3 class="group-title declined">Declined</h3>
+        <div class="appointments-container">
+            @foreach (var a in declinedAppointments)
+            {
+                <div class="appointment-card status-declined">
+                    <div class="appointment-header">
+                        <span class="service-name">@a.ServiceName</span>
+                        <span class="status">@a.Status</span>
+                    </div>
+                    <div class="appointment-body">
+                        <div><strong>Member:</strong> @a.CustomerEmail</div>
+                        <div><strong>Pet:</strong> @a.PetName</div>
+                        <div><strong>Date:</strong> @a.Date?.ToString("dd.MM.yyyy")</div>
+                        <div><strong>Time:</strong> @a.Date?.ToString("HH:mm")</div>
+                        @if (!string.IsNullOrEmpty(a.Notes))
+                        {
+                            <div><strong>Notes:</strong> @a.Notes</div>
+                        }
+                        <div class="appointment-actions">
+                            <form asp-action="DeclineAppointment" method="post" style="display:inline-block; margin-left:5px;">
+                                <input type="hidden" name="id" value="@a.Id" />
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn-decline-declined">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}

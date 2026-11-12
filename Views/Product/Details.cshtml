@@ -1,0 +1,268 @@
+﻿@model Product
+@using Microsoft.EntityFrameworkCore
+@inject MelodyDB db
+
+@{
+    ViewBag.Title = Model.Name;
+
+    // ===== Get inventory =====
+    var inventory = await db.Inventories
+        .FirstOrDefaultAsync(i => i.ProductId == Model.Id);
+
+    int qty = inventory?.Quantity ?? 0;
+}
+
+<style>
+    .toast {
+        position: fixed;
+        background: #16a34a;
+        color: #fff;
+        padding: 1px 20px;
+        border-radius: 10px;
+        font-size: 14px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .3s ease, transform .3s ease;
+        transform: translateY(20px);
+        left: 40%;
+        top: 28%;
+        transform: translate(-50%, -50%);
+    }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+    /* ===== Stock ===== */
+    .stock {
+        margin-top: 10px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+        .stock.in {
+            color: #16a34a;
+        }
+
+        .stock.low {
+            color: #d97706;
+        }
+
+        .stock.out {
+            color: #dc2626;
+        }
+
+    .btn-disabled {
+        background: #9ca3af !important;
+        cursor: not-allowed;
+    }
+</style>
+
+<!-- ===== Toasts ===== -->
+<div id="cartToast" class='add-to-cart-toast' ">
+    ✅ Successfully added to cart
+</div>
+
+<div id="wishToast" class='add-to-cart-toast' style="background:#db2777">
+    ❤️ Added to wishlist
+</div>
+
+<div style="max-width:900px; margin:40px auto;
+            display:grid; grid-template-columns:1fr 1fr; gap:40px">
+
+    <!-- ===== Image ===== -->
+    <div>
+        <img src="~/images/@(string.IsNullOrEmpty(Model.ImageUrl) ? "no-image.png" : Model.ImageUrl)"
+             alt="@Model.Name"
+             style="width:100%;
+                    border-radius:16px;
+                    box-shadow:0 10px 25px rgba(0,0,0,0.1)" />
+    </div>
+
+    <!-- ===== Info ===== -->
+    <div>
+        <div style="font-size:12px; color:#6b7280; text-transform:uppercase">
+            @Model.Brand
+        </div>
+
+        <h1 style="margin:8px 0">@Model.Name</h1>
+
+        <div style="font-size:24px; font-weight:700; margin:12px 0">
+            RM @Model.Price.ToString("F2")
+        </div>
+
+        <p style="line-height:1.6; color:#374151">
+            @Model.Description
+        </p>
+
+        <div style="margin-top:14px">
+            <strong>SKU:</strong> @Model.SKU
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.Tags))
+        {
+            <div style="margin-top:6px">
+                <strong>Tags:</strong> @Model.Tags
+            </div>
+        }
+
+        <!-- ===== STOCK ===== -->
+        @if (qty > 10)
+        {
+            <div class="stock in">✔ In stock (@qty available)</div>
+        }
+        else if (qty > 0)
+        {
+            <div class="stock low">⚠ Only @qty left in stock</div>
+        }
+        else
+        {
+            <div class="stock out">✖ Out of stock</div>
+        }
+
+        <!-- ===== Add to Cart ===== -->
+        <form asp-controller="Cart"
+              asp-action="Add"
+              method="post"
+              class="add-to-cart-form">
+
+            <input type="hidden" name="productId" value="@Model.Id" />
+            <input type="hidden"
+                   name="returnUrl"
+                   value="@Url.Action("Details", "Product", new { id = Model.Id })" />
+
+            <button type="submit" class="btn-small btn-add-to-cart">
+                Add to Cart
+            </button>
+        </form>
+
+
+
+        <!-- ===== Wishlist ===== -->
+        <form asp-controller="Wishlist"
+              asp-action="Add"
+              method="post"
+              class="wishlist-form"
+              style="margin-top:10px">
+
+            <input type="hidden" name="productId" value="@Model.Id" />
+
+            <button type="submit"
+                    class="btn-small"
+                    style="background:#fce7f3;color:#9d174d">
+                ❤️ Add to Wishlist
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        /* ===============================
+           RESET ALL TOASTS
+        =============================== */
+        document.querySelectorAll('.add-to-cart-toast').forEach(t => {
+            t.classList.remove('show');
+            t.style.display = 'none';
+        });
+
+        /* ===============================
+           ADD TO CART (AJAX + Auth Safe)
+        =============================== */
+        const cartToast = document.getElementById('cartToast');
+        let cartTimer = null;
+
+        document.querySelectorAll('.add-to-cart-form').forEach(form => {
+
+            if (form.dataset.bound === "1") return;
+            form.dataset.bound = "1";
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const btn = form.querySelector('button');
+                if (btn && btn.disabled) return;
+
+                fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: new FormData(form)
+                })
+                .then(res => {
+
+                    if (res.status === 401) {
+                        const returnUrl = encodeURIComponent(window.location.pathname);
+                        window.location.href = `/Account/Login?returnUrl=${returnUrl}`;
+                        return;
+                    }
+
+                    if (!res.ok) return;
+
+                    /* Cart Toast */
+                    cartToast.style.display = 'block';
+                    cartToast.classList.remove('show');
+                    void cartToast.offsetWidth;
+                    cartToast.classList.add('show');
+
+                    if (cartTimer) clearTimeout(cartTimer);
+                    cartTimer = setTimeout(() => {
+                        cartToast.classList.remove('show');
+                        cartToast.style.display = 'none';
+                    }, 4000);
+                });
+            });
+        });
+
+        /* ===============================
+           ADD TO WISHLIST (AJAX + Auth Safe)
+        =============================== */
+        const wishToast = document.getElementById('wishToast');
+        let wishTimer = null;
+
+        document.querySelectorAll('.wishlist-form').forEach(form => {
+
+            if (form.dataset.bound === "1") return;
+            form.dataset.bound = "1";
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: new FormData(form)
+                })
+                .then(res => {
+
+                    if (res.status === 401) {
+                        const returnUrl = encodeURIComponent(window.location.pathname);
+                        window.location.href = `/Account/Login?returnUrl=${returnUrl}`;
+                        return;
+                    }
+
+                    if (!res.ok) return;
+
+                    wishToast.style.display = 'block';
+                    wishToast.classList.remove('show');
+                    void wishToast.offsetWidth;
+                    wishToast.classList.add('show');
+
+                    if (wishTimer) clearTimeout(wishTimer);
+                    wishTimer = setTimeout(() => {
+                        wishToast.classList.remove('show');
+                        wishToast.style.display = 'none';
+                    }, 4000);
+                });
+            });
+        });
+    });
+</script>
+
+

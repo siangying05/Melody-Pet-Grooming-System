@@ -1,0 +1,56 @@
+﻿@model Melody.Models.ServiceVM
+
+@{
+    ViewBag.Title = "Edit Service";
+}
+
+<p class="EditServices">Edit Service</p>
+
+<div class="formAddServices">
+    <form asp-action="EditServices" method="post">
+        <input type="hidden" asp-for="Id" />
+
+        <div class="form-group">
+            <label asp-for="Name"></label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Price"></label>
+            <input asp-for="Price" class="form-control" type="number" step="0.01" />
+            <span asp-validation-for="Price" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Duration"></label>
+            <input asp-for="Duration" class="form-control" type="number" />
+            <span asp-validation-for="Duration" class="text-danger"></span>
+            <small class="form-text text-muted">Duration in minutes</small>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Category"></label>
+            <select name="Category" class="form-control">
+                <option value="">-- Select Category --</option>
+                @foreach (var c in ViewBag.AllCategories)
+                {
+                    if (c == Model.Category)
+                    {
+                        <option value="@c" selected>@c</option>
+                    }
+                    else
+                    {
+                        <option value="@c">@c</option>
+                    }
+                }
+            </select>
+            <span asp-validation-for="Category" class="text-danger"></span>
+        </div>
+
+        <div class="form-group mt-3">
+            <button type="submit" class="btn-add-service">Save Changes</button>
+            <a asp-action="Services" class="btn-cancel">Cancel</a>
+        </div>
+    </form>
+</div>

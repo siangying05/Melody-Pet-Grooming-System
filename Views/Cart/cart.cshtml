@@ -1,0 +1,271 @@
+﻿@model List<Melody.Models.CartVM>
+
+@{
+    ViewBag.Title = "Shopping Cart";
+}
+
+<h2>🛒 Shopping Cart</h2>
+
+@if (Model == null || !Model.Any())
+{
+    <p>Your cart is empty.</p>
+}
+else
+{
+    <table style="width:100%; border-collapse:collapse">
+        <thead>
+            <tr style="border-bottom:1px solid #ccc">
+                <th style="text-align:left; padding:10px">Product</th>
+                <th style="padding:10px">Price</th>
+                <th style="padding:10px">Qty</th>
+                <th style="padding:10px">Total</th>
+                <th style="padding:10px"></th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr data-product-id="@item.ProductId"
+                    data-max-stock="@item.MaxStock"
+                    style="border-bottom:1px solid #eee">
+
+                    <td style="padding:10px">
+                        <div style="display:flex; align-items:center; gap:10px">
+                            <img src="~/images/@(string.IsNullOrEmpty(item.ImageUrl) ? "no-image.png" : item.ImageUrl)"
+                                 style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid #ddd" />
+                            <span>@item.ProductName</span>
+                        </div>
+                    </td>
+
+                    <td style="text-align:center">
+                        RM @item.Price.ToString("F2")
+                    </td>
+
+                    <!-- ===== Quantity (AJAX) ===== -->
+                    <td style="text-align:center">
+                        <form asp-action="UpdateQuantity"
+                              method="post"
+                              class="qty-form">
+
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden" name="productId" value="@item.ProductId" />
+
+                            <div class="qty-inline">
+                                <button type="button" class="qty-circle btn-minus">−</button>
+
+                                <span class="qty-number">@item.Quantity</span>
+
+                                <button type="button" class="qty-circle btn-plus">+</button>
+
+                            </div>
+                        </form>
+                    </td>
+
+                    <td class="item-total" style="text-align:center">
+                        RM @item.Total.ToString("F2")
+                    </td>
+
+                    <td style="text-align:center">
+                        <button type="button"
+                                class="btn-remove"
+                                data-product-id="@item.ProductId">
+                            Remove
+                        </button>
+
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h3 style="text-align:right; margin-top:20px">
+        Grand Total: RM
+        <span id="grandTotal">
+            @Model.Sum(x => x.Total).ToString("F2")
+        </span>
+    </h3>
+}
+
+<div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px">
+    <a asp-action="Clear"
+       class="btn-small"
+       style="background:#e5e7eb; color:#111827">
+        Clear Cart
+    </a>
+
+    <a asp-controller="Checkout"
+       asp-action="Index"
+       class="btn-small btn-add-to-cart">
+        Checkout
+    </a>
+</div>
+
+@Html.AntiForgeryToken()
+
+<!-- ================= CSS ================= -->
+<style>
+    .qty-form {
+        display: flex;
+        justify-content: center;
+    }
+
+    .qty-inline {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .qty-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 999px;
+        border: 1px solid #d1d5db;
+        background: #f9fafb;
+        color: #111827;
+        font-size: 18px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all .2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .qty-circle:hover {
+            background: #4f46e5;
+            border-color: #4f46e5;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+    .qty-number {
+        min-width: 24px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 700;
+        color: #111827;
+    }
+</style>
+
+<!-- ================= JS (AJAX Quantity) ================= -->
+<script>
+    document.querySelectorAll('tr[data-product-id]').forEach(row => {
+
+        const productId = row.dataset.productId;
+        const qtySpan = row.querySelector('.qty-number');
+        const minusBtn = row.querySelector('.btn-minus');
+        const plusBtn = row.querySelector('.btn-plus');
+        const removeBtn = row.querySelector('.btn-remove');
+
+        // ===============================
+        // UPDATE QUANTITY (+ / -)
+        // ===============================
+        function updateQuantity(newQty) {
+            if (newQty < 1) newQty = 1;
+
+            const formData = new FormData();
+            formData.append('productId', productId);
+            formData.append('quantity', newQty);
+
+            fetch('/Cart/UpdateQuantity', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => {
+
+                // 未登录 → [Authorize] redirect
+                if (res.redirected) {
+                    window.location.href = res.url;
+                    return;
+                }
+
+                return res.json();
+            })
+            .then(data => {
+                if (!data || !data.success) return;
+
+
+                qtySpan.innerText = data.quantity;
+
+
+                row.querySelector('.item-total').innerText =
+                    'RM ' + Number(data.itemTotal).toFixed(2);
+
+
+                document.getElementById('grandTotal').innerText =
+                    Number(data.grandTotal).toFixed(2);
+            });
+        }
+
+        // + / -
+        minusBtn.addEventListener('click', () => {
+            const currentQty = parseInt(qtySpan.innerText);
+            updateQuantity(currentQty - 1);
+        });
+
+        const maxStock = parseInt(row.dataset.maxStock); 
+
+        plusBtn.addEventListener('click', () => {
+            const currentQty = parseInt(qtySpan.innerText);
+
+
+            if (currentQty >= maxStock) {
+                return;
+            }
+
+        updateQuantity(currentQty + 1);
+    });
+
+
+        // ===============================
+        // REMOVE ITEM (AJAX)
+        // ===============================
+        if (removeBtn) {
+            removeBtn.addEventListener('click', () => {
+
+                if (!confirm('Remove this item from cart?')) return;
+
+                const formData = new FormData();
+                formData.append('productId', productId);
+
+                fetch('/Cart/RemoveAjax', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => {
+
+                    // 未登录 → [Authorize] redirect
+                    if (res.redirected) {
+                        window.location.href = res.url;
+                        return;
+                    }
+
+                    return res.json();
+                })
+                .then(data => {
+                    if (!data || !data.success) return;
+
+                    row.remove();
+
+                    document.getElementById('grandTotal').innerText =
+                        Number(data.grandTotal).toFixed(2);
+
+                
+                        if (data.isEmpty) {
+                            document.querySelector('table').remove();
+                            document.getElementById('grandTotal').innerText = '0.00';
+
+                            const emptyMsg = document.createElement('p');
+                            emptyMsg.innerText = 'Your cart is empty.';
+                            document.querySelector('h2').after(emptyMsg);
+                        }
+
+                });
+            });
+        }
+    });
+</script>
+
+

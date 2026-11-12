@@ -1,0 +1,46 @@
+﻿@model Melody.Models.AppointmentVM
+
+@{
+    ViewBag.Title = "Edit Appointments";
+}
+
+<p class="AdminEditAppoint">Edit Appointment</p>
+
+<div class="current-appointment1">
+    <p><strong>CustomerEmail:</strong> @Model.CustomerEmail</p>
+    <p><strong>Pet:</strong> @Model.PetName</p>
+    <p><strong>Service:</strong> @Model.ServiceName</p>
+
+    <p>
+        <strong>Current Date:</strong>
+        @Model.Date?.ToString("dd.MM.yyyy")
+    </p>
+    <p>
+        <strong>Current Time:</strong>
+        @Model.Date?.ToString("HH:mm")
+    </p>
+</div>
+
+<form asp-action="AdminEditAppointment" method="post" class="AdminEditAppointForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div>
+        <label for="Date">Select Date:</label>
+        <input type="datetime-local"
+               asp-for="Date"
+               class="form-control"
+               min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")"
+               required />
+        @Html.ValidationMessageFor(m => m.Date)
+    </div>
+
+
+    <div>
+        <label>Notes</label>
+        <textarea asp-for="Notes"></textarea>
+    </div>
+
+    <button type="submit" class="btn-save-ADA">Save</button>
+    <a asp-action="AllMemberAppointments" class="btn-cancel">Cancel</a>
+</form>

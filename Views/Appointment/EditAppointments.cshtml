@@ -1,0 +1,43 @@
+﻿@model Melody.Models.AppointmentVM
+
+@{
+    ViewBag.Title = "Change Date & Time";
+}
+
+
+<p class="RCDT">Request Change Date & Time</p>
+
+<div class="current-appointment">
+    <p><strong>Service:</strong> @Model.ServiceName</p>
+    <p><strong>Pet:</strong> @Model.PetName</p>
+
+    <p>
+        <strong>Current Date:</strong>
+        @Model.Date?.ToString("dd.MM.yyyy")
+    </p>
+    <p>
+        <strong>Current Time:</strong>
+        @Model.Date?.ToString("HH:mm")
+    </p>
+</div>
+
+<form asp-action="EditAppointments" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div>
+        <label for="Date">Select Date and Time:</label>
+        <input type="datetime-local" asp-for="Date" class="form-control"
+               min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
+        @Html.ValidationMessageFor(m => m.Date)
+    </div>
+
+    <label>Reason for change</label>
+    <textarea asp-for="Notes"
+              class="form-control"
+              rows="3"
+              placeholder="Please state your reason"></textarea>
+
+    <button type="submit" class="btn-request">Submit Request</button>
+    <a asp-action="MyAppointments" class="btn-cancel">Back</a>
+</form>

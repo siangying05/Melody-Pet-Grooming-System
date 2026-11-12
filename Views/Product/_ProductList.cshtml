@@ -1,0 +1,114 @@
+﻿@model ProductPageVM
+@using Microsoft.EntityFrameworkCore
+@inject MelodyDB db
+
+@{
+   
+    ViewBag.Title = "Shop";
+    Layout = "_Layout";
+
+    var productIds = Model.Products.Select(p => p.Id).ToList();
+
+    var inventories = await db.Inventories
+        .Where(i => productIds.Contains(i.ProductId))
+        .ToListAsync();
+}
+
+
+<div class="products-grid">
+
+    @foreach (var p in Model.Products)
+    {
+        var inv = inventories.FirstOrDefault(i => i.ProductId == p.Id);
+        int qty = inv?.Quantity ?? 0;
+
+        <div class="product-card">
+            <div class="product-image">
+                @if (!string.IsNullOrEmpty(p.ImageUrl))
+                {
+                    <img src="~/images/@p.ImageUrl" />
+                }
+                else
+                {
+                    <span>🛍️</span>
+                }
+            </div>
+
+            <div class="product-category">@p.Brand</div>
+            <h3>@p.Name</h3>
+
+            <p class="product-description">
+                @(p.Description?.Length > 80 ? p.Description.Substring(0, 80) + "..." : p.Description)
+            </p>
+
+            <div class="product-price">
+                RM @p.Price.ToString("F2")
+            </div>
+
+            <!-- ===== STOCK ===== -->
+            @if (qty > 10)
+            {
+                <div class="stock in">✔ In stock (@qty)</div>
+            }
+            else if (qty > 0)
+            {
+                <div class="stock low">⚠ Only @qty left</div>
+            }
+            else
+            {
+                <div class="stock out">✖ Out of stock</div>
+            }
+
+            <div class="product-actions">
+                <a asp-action="Details"
+                   asp-route-id="@p.Id"
+                   class="btn-small">
+                    View Details
+                </a>
+
+                <form asp-controller="Cart"
+                      asp-action="Add"
+                      method="post"
+                      class="add-to-cart-form">
+                    <input type="hidden" name="productId" value="@p.Id" />
+                    <button type="submit"
+                            class="btn-small btn-add-to-cart @(qty <= 0 ? "btn-disabled" : "")"
+                            @(qty <= 0 ? "disabled" : "")>
+                        Add to Cart
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    }
+
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <div class="pagination"
+         style="display:flex;justify-content:center;gap:8px;margin-top:30px">
+
+        <!-- Prev -->
+        <button class="page-btn"
+                data-page="@(Model.CurrentPage - 1)"
+                @(Model.CurrentPage == 1 ? "disabled" : "")>
+            ◀ Prev
+        </button>
+
+        @for (int i = 1; i <= Model.TotalPages; i++)
+        {
+            <button class="page-btn @(i == Model.CurrentPage ? "active" : "")"
+                    data-page="@i">
+                @i
+            </button>
+        }
+
+        <!-- Next -->
+        <button class="page-btn"
+                data-page="@(Model.CurrentPage + 1)"
+                @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")>
+            Next ▶
+        </button>
+    </div>
+}

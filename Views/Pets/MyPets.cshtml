@@ -1,0 +1,46 @@
+﻿@model List<Melody.Models.Pet>
+
+@{
+    ViewBag.Title = "My Pets";
+    Layout = "_Layout";
+}
+<a asp-controller="Account" asp-action="Profile" class="Back">Back to Profile</a>
+<h2>🐾 My Pets</h2>
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state">
+        <p>You haven't added any pets yet.</p>
+        <a asp-action="Create" class="btn-ViewAdd">➕ Add Pet</a>
+    </div>
+}
+else
+{
+    <div class="pet-Viewlist">
+        @foreach (var pet in Model)
+        {
+            <div class="pet-view" data-type="@pet.Type">
+                <h4>@pet.Name</h4>
+                <p>
+                    Breed: @pet.Breed <br />
+                    Age: @pet.Age
+                </p>
+
+                <div class="pet-actions">
+                    <a asp-action="Edit" asp-route-id="@pet.Id" class="btnEdit">✏️ Edit</a> |
+                    <form asp-action="Delete"
+                          asp-route-id="@pet.Id"
+                          method="post"
+                          style="display:inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btnDelete"
+                                onclick="return confirm('Delete this pet(@pet.Name)?')">
+                            🗑 Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+}
+<a asp-controller="Pets" asp-action="Create" asp-route-returnUrl="@Context.Request.Path" class="btn-ViewAddPrimary">➕ Add New Pet</a>

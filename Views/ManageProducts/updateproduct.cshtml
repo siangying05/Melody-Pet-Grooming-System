@@ -1,0 +1,77 @@
+﻿@model Product
+@{
+    ViewBag.Title = "Update Product";
+    Layout = "_Layout";
+}
+
+<h2 class="manage-title">✏️ Update Product</h2>
+
+<form asp-action="UpdateProduct"
+      asp-controller="ManageProducts"
+      method="post"
+      enctype="multipart/form-data"
+      class="manage-form">
+
+    <input type="hidden" name="Id" value="@Model.Id" />
+
+    <label>Name</label>
+    <input name="Name" value="@Model.Name" />
+
+    <label>SKU</label>
+    <input name="SKU" value="@Model.SKU" />
+
+    <label>Description</label>
+    <textarea name="Description">@Model.Description</textarea>
+
+    <label>Price</label>
+    <input name="Price" value="@Model.Price" type="number" step="0.01" />
+
+    <label>Brand</label>
+    <input name="Brand" value="@Model.Brand" />
+
+    <label>Category</label>
+    <select name="CategoryId">
+        @foreach (var c in ViewBag.Categories)
+        {
+            <option value="@c.Id" selected="@(c.Id == Model.CategoryId)">
+                @c.Name
+            </option>
+        }
+    </select>
+
+    <!-- ===== Inventory ===== -->
+    <hr />
+    <h3>📦 Inventory</h3>
+
+    <label>Stock Quantity</label>
+    <input type="number"
+           name="Inventory.Quantity"
+           min="0"
+           value="@(ViewBag.Inventory?.Quantity ?? 0)" />
+
+    <label>Minimum Stock</label>
+    <input type="number"
+           name="Inventory.MinimumStock"
+           min="0"
+           value="@(ViewBag.Inventory?.MinimumStock ?? 0)" />
+
+    <label>Maximum Stock</label>
+    <input type="number"
+           name="Inventory.MaximumStock"
+           min="0"
+           value="@(ViewBag.Inventory?.MaximumStock ?? 0)" />
+
+    <label>Current Image</label><br />
+    <img src="~/images/@Model.ImageUrl" style="max-width:150px" />
+
+    <label>Change Image</label>
+    <input type="file" name="image" />
+
+    <label>
+        <input type="checkbox" name="IsActive" @(Model.IsActive ? "checked" : "") />
+        Active
+    </label>
+
+    <button type="submit">Update</button>
+    <a href="/ManageProducts">Cancel</a>
+</form>

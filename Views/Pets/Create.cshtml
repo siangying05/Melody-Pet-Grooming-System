@@ -1,0 +1,31 @@
+﻿@model PetCreateVM
+@{
+    ViewBag.Title = "Create New Pet";
+    Layout = "_Layout";
+}
+
+<a href="@Model.ReturnUrl" class="Back">Back to Profile</a>
+<h2>➕ Add New Pet</h2>
+
+<form method="post" class="form">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="ReturnUrl" />
+    <label asp-for="Name"></label>
+    <input asp-for="Name">
+    <span asp-validation-for="Name"></span>
+
+    <label asp-for="Type"></label>
+    <select asp-for="Type" asp-items="Html.GetEnumSelectList<PetType>()"></select>
+    <span asp-validation-for="Type"></span>
+
+    <label asp-for="Breed"></label>
+    <input asp-for="Breed">
+    <span asp-validation-for="Breed"></span>
+
+    <label asp-for="Age"></label>
+    <input asp-for="Age" type="number" min="0">
+    <span asp-validation-for="Age"></span>
+
+    <button class="btn-profile primary">💾 Save</button>
+    <a href="@Model.ReturnUrl" class="btn-profile">Cancel</a>
+</form>

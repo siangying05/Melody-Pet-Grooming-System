@@ -1,0 +1,42 @@
+﻿@model Melody.Models.EditUserVM
+@{
+    ViewBag.Title = "Edit User";
+    Layout = "_Layout";
+}
+
+<a asp-action="Users" class="Back">Back to Users</a>
+<h2>Edit User</h2>
+
+<form asp-action="EditUser" method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <!-- Hidden Role -->
+    <input type="hidden" asp-for="Role" />
+
+    <div class="form-group">
+        <label asp-for="Email"></label>
+        <input asp-for="Email" class="form-control" readonly />
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Name"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Phone"></label>
+        <input asp-for="Phone" class="form-control" />
+    </div>
+
+    @if (Model.Role == "Member")
+    {
+        <div class="form-group">
+            <label asp-for="Address"></label>
+            <input asp-for="Address" class="form-control" />
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a asp-action="Users" class="btn btn-secondary">Cancel</a>
+</form>

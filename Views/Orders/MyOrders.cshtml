@@ -1,0 +1,45 @@
+﻿@model List<Melody.Models.Order>
+
+@{
+    ViewBag.Title = "My Orders";
+}
+
+<link rel="stylesheet" href="~/css/my-orders.css" />
+
+<div class="myorders-container">
+
+    <!-- HEADER -->
+    <div class="myorders-header">
+        <h2>📦 My Orders</h2>
+
+        <!-- STATUS FILTER (AJAX) -->
+        <select id="statusSelect" class="myorders-filter">
+            <option value="">All Orders</option>
+            <option value="Pending">Pending</option>
+            <option value="Completed">Completed</option>
+            <option value="Refunding">Refunding</option>
+            <option value="Refunded">Refunded</option>
+            <option value="RefundRejected">Refund Rejected</option>
+            <option value="Cancelled">Cancelled</option>
+        </select>
+    </div>
+
+    <!-- ORDERS LIST -->
+    <div id="ordersContainer">
+        @await Html.PartialAsync("_OrdersTable", Model)
+    </div>
+</div>
+
+<script>
+    document.getElementById('statusSelect')
+        .addEventListener('change', function () {
+
+            const status = this.value;
+
+            fetch(`/Orders/AjaxList?status=${encodeURIComponent(status)}`)
+                .then(res => res.text())
+                .then(html => {
+                    document.getElementById('ordersContainer').innerHTML = html;
+                });
+        });
+</script>

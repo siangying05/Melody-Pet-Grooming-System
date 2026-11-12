@@ -1,0 +1,237 @@
+﻿@model Melody.Models.ProfileVM
+@{
+    ViewBag.Title = "My Profile";
+    Layout = "_Layout";
+}
+<a asp-controller="Home" asp-action="Index" class="Back">Back to Home</a>
+<div class="profile-page">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="avatar-section">
+            <img src="@Model.PhotoURL" alt="Profile Photo" class="profile-avatar" id="avatarImage">
+            <div class="user-info">
+                <h2>@Model.Name</h2>
+                <span class="role-badge @Model.Role.ToLower()">@Model.Role</span>
+                <div class="user-email">@Model.Email</div>
+                <div class="user-meta">
+                    @if (!string.IsNullOrEmpty(Model.Phone))
+                    {
+                        <span>📞 @Model.Phone</span>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Address))
+                    {
+                        <span>📍 @Model.Address</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="user-actions">
+            <a asp-controller="Account" asp-action="UpdatePassword" class="btn-profile">
+                🔐 Change Password
+            </a>
+
+            @if (Model.Role == "Member")
+            {
+                <a asp-controller="Account" asp-action="UpdateProfile" class="btn-profile primary">
+                    ✏️ Edit Profile
+                </a>
+
+                <!-- Change Photo Form -->
+                <form asp-controller="Account" asp-action="UploadPhoto" method="post" enctype="multipart/form-data">
+                    <input type="file" name="Photo" id="avatarUpload" accept="image/*" style="display:none" onchange="this.form.submit()" />
+                    <button type="button" class="btn-profile" onclick="document.getElementById('avatarUpload').click()">
+                        📷 Change Photo
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+
+    @if (Model.Role == "Member")
+    {
+        <!-- Quick Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">🐾</div>
+                <div class="stat-number">@Model.PetsCount</div>
+                <div class="stat-label">My Pets</div>
+                <a asp-controller="Pets" asp-action="MyPets" class="stat-link">
+                    View
+                </a>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="stat-number">@Model.AppointmentsCount</div>
+                <div class="stat-label">Appointments</div>
+                <a asp-controller="Appointment" asp-action="MyAppointments" class="stat-link">View</a>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">🛒</div>
+                <div class="stat-number">@Model.OrdersCount</div>
+                <div class="stat-label">Orders</div>
+                <a asp-controller="OrderS" asp-action="MyOrders" class="stat-link">View</a>
+            </div>
+        </div>
+
+        <!-- Pets Section -->
+        <div class="profile-section">
+            <div class="section-header">
+                <h3>🐾 My Pets <span class="section-badge">@Model.PetsCount</span></h3>
+            </div>
+            <div class="section-body">
+                @if (Model.PetsCount > 0)
+                {
+                    <div class="pets-list">
+                        @foreach (var pet in Model.Pets)
+                        {
+                            <div class="pet-card">
+                                @{
+                                    string petIcon = "🐾";
+                                    if (pet.Type == Melody.Models.PetType.Dog) petIcon = "🐕";
+                                    else if (pet.Type == Melody.Models.PetType.Cat) petIcon = "🐈";
+                                    else if (pet.Type == Melody.Models.PetType.Bird) petIcon = "🐦";
+                                    else if (pet.Type == Melody.Models.PetType.Rabbit) petIcon = "🐰";
+                                    else if (pet.Type == Melody.Models.PetType.Hamster) petIcon = "🐹";
+                                    else if (pet.Type == Melody.Models.PetType.Fish) petIcon = "🐠";
+                                    else if (pet.Type == Melody.Models.PetType.Reptile) petIcon = "🦎";
+                                }
+                                <div class="pet-icon">@petIcon</div>
+                                <div class="pet-info">
+                                    <h4 class="pet-name">@pet.Name</h4>
+                                    <p class="pet-meta">@pet.Type </p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <a asp-controller="Pets" asp-action="Create" asp-route-returnUrl="@Context.Request.Path" class="btn-profile primary">➕ Add New Pet</a>
+                    </div>
+                }else
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">🐾</div>
+                        <p class="empty-text">You haven't added any pets to your profile.</p>
+                        <a asp-controller="Pets" asp-action="Create" class="btn-profile primary">➕ Add New Pet</a>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Appointments Section -->
+        <div class="profile-section">
+            <div class="section-header">
+                <h3>📅 Upcoming Appointments <span class="section-badge">@Model.Appointments.Count</span></h3>
+            </div>
+            <div class="section-body">
+                @if (Model.Appointments.Count > 0)
+                {
+                    <div class="appointments-list">
+                        @foreach (var appointment in Model.Appointments)
+                        {
+                            <div class="appointment-item">
+                                <div class="appointment-details">
+                                    <h4 class="appointment-service">@appointment.Service?.Name</h4>
+                                    <p class="appointment-meta">
+                                        📅 @appointment.Date.ToString("MMM dd, yyyy hh:mm tt") •
+                                        🐾 @appointment.Pet?.Name
+                                    </p>
+                                    @if (!string.IsNullOrEmpty(appointment.Notes))
+                                    {
+                                        <p class="appointment-notes">📝 @appointment.Notes</p>
+                                    }
+                                </div>
+                                <span class="appointment-status @($"status-{appointment.Status?.ToLower()}")">
+                                    @appointment.Status
+                                </span>
+                            </div>
+                        }
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <a asp-controller="Service" asp-action="Services" class="btn-profile primary">📅 Book New Appointment</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">📅</div>
+                        <p class="empty-text">You don't have any appointments scheduled.</p>
+                        <a asp-controller="Service" asp-action="Services" class="btn-profile primary">📅 Book an Appointment</a>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Orders Section -->
+        <div class="profile-section">
+            <div class="section-header">
+                <h3>🛒 Recent Orders <span class="section-badge">@Model.Orders.Count</span></h3>
+            </div>
+            <div class="section-body">
+                @if (Model.Orders.Count > 0)
+                {
+                    <div class="orders-list">
+                        @foreach (var order in Model.Orders)
+                        {
+                            <div class="order-item">
+                                <div class="order-details">
+                                    <h4 class="order-number">Order #@order.OrderNumber</h4>
+                                    <p class="order-meta">
+                                        ⏰ @order.CreatedAt.ToString("MMM dd, yyyy") •
+                                        📍 @order.ShippingAddress
+                                    </p>
+                                    <p class="order-total">Total: $@order.Total.ToString("F2")</p>
+                                </div>
+                                <span class="order-status">@order.Status</span>
+                            </div>
+                        }
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <a asp-controller="Product" asp-action="index" class="btn-profile primary">🛒 Continue Shopping</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">🛒</div>
+                        <p class="empty-text">You haven't placed any orders yet.</p>
+                        <a asp-controller="Product" asp-action="index" class="btn-profile primary">🛒 Start Shopping</a>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Admin View -->
+        <div class="profile-section">
+            <div class="section-body">
+                <div class="admin-view">
+                    <div class="admin-icon">👑</div>
+                    <p class="admin-message">
+                        You are logged in as an administrator.<br>
+                        Access the admin panel to manage the system.
+                    </p>
+                    <a  asp-controller="Admin" asp-action="Dashboard" class="btn-profile primary">📊 Go to Admin Dashboard</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section scripts {
+    <script>
+        // 可选：上传后自动刷新头像
+        document.getElementById('avatarUpload').addEventListener('change', function () {
+            if (this.files && this.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById('avatarImage').src = e.target.result;
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    </script>
+}

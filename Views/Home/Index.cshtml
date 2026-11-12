@@ -1,0 +1,703 @@
+﻿@using System.Security.Claims
+@model Dictionary<string, List<Service>>
+@{
+    if (User.Identity?.IsAuthenticated == true &&
+        User.IsInRole("Admin"))
+    {
+        Context.Response.Redirect("/Admin/Dashboard");
+        return;
+    }
+}
+@{
+    ViewBag.Title = "Pet Grooming Appointment";
+}
+
+@using Microsoft.EntityFrameworkCore
+@inject MelodyDB dbContext
+
+@{
+    bool hasServices = false;
+    bool hasProducts = false;
+    List<Service> services = new List<Service>();
+    List<Product> products = new List<Product>();
+    int happyPetsCount = 1000;
+    int servicesCount = 5;
+    int productsCount = 25;
+
+    try
+    {
+        string? memberEmail = User.Identity?.Name;
+
+        var memberPetTypes = await dbContext.Pets
+            .Where(p => p.OwnerEmail == memberEmail)
+            .Select(p => p.Type)
+            .ToListAsync();
+
+        try
+        {
+            var servicesQuery = await dbContext.Services
+                .Include(s => s.ServicePetTypes)
+                .ToListAsync();
+
+            services = servicesQuery
+                .OrderByDescending(s => s.ServicePetTypes
+                    .Any(spt => memberPetTypes.Contains(spt.PetType)))
+                .Take(3)
+                .ToList();
+
+            hasServices = services.Any();
+        }
+        catch
+        {
+            services = new List<Service>();
+            hasServices = false;
+        }
+
+        try
+        {
+            var productsQuery = await dbContext.Products
+                .Where(p => p.IsActive)
+                .Include(p => p.ProductPetTypes)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+
+            products = productsQuery
+                .OrderByDescending(p => p.ProductPetTypes
+                    .Any(ppt => memberPetTypes.Contains(ppt.PetType)))
+                .Take(6)
+                .ToList();
+
+            hasProducts = products.Any();
+        }
+        catch
+        {
+            products = new List<Product>();
+            hasProducts = false;
+        }
+
+        try
+        {
+            happyPetsCount = await dbContext.Pets.CountAsync();
+            servicesCount = await dbContext.Services.CountAsync();
+            productsCount = await dbContext.Products.CountAsync(p => p.IsActive);
+        }
+        catch
+        {
+        }
+    }
+    catch
+    {
+        hasServices = false;
+        hasProducts = false;
+    }
+
+    var testimonials = new[]
+    {
+        new { Name = "Sarah M.", Pet = "Owner of Max", Text = "My golden retriever always comes back from Melody looking fabulous and smelling amazing!", Rating = 5 },
+        new { Name = "James L.", Pet = "Owner of Whiskers", Text = "They're so gentle with my anxious cat. I trust them completely with my fur baby.", Rating = 5 },
+        new { Name = "Lisa W.", Pet = "Owner of Coco", Text = "Professional service and amazing pet products! My dog loves their shampoo.", Rating = 5 }
+    };
+}
+
+<div class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">Professional Pet Care for Your Furry Family</h1>
+        <p class="hero-subtitle">Where every pet gets the royal treatment they deserve</p>
+        <div class="hero-buttons">
+            <a asp-controller="Product" asp-action="Index" class="btn-primary">Go to Shop Now</a>
+            <a asp-controller="Service" asp-action="Services" class="btn-secondary">Our Services</a>
+        </div>
+    </div>
+    <div class="hero-image">
+        <div class="scroll-carousel">
+            <div class="carousel-window">
+                <div class="carousel-stack">
+                </div>
+            </div>
+            <div class="scroll-controls">
+                <div class="scroll-dots">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="stats-section">
+    <div class="stats-container">
+        <div class="stat-item">
+            <div class="stat-number">@(ViewBag.HappyPetsCount > 0 ? $"{ViewBag.HappyPetsCount}+" : "1000+")</div>
+            <div class="stat-label">Happy Pets</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">5★</div>
+            <div class="stat-label">Customer Rating</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">@(ViewBag.ServicesCount > 0 ? $"{ViewBag.ServicesCount}+" : "50+")</div>
+            <div class="stat-label">Grooming Services</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">@(ViewBag.ProductsCount > 0 ? $"{ViewBag.ProductsCount}+" : "100+")</div>
+            <div class="stat-label">Pet Products</div>
+        </div>
+    </div>
+</div>
+
+<div class="services-section">
+    <div class="section-header">
+        <h2>Our Premium Services</h2>
+        <p>Tailored grooming experiences for every pet's needs</p>
+    </div>
+
+    <div class="services-grid">
+        @if (hasServices && services.Any())
+        {
+            @for (int i = 0; i < services.Count && i < 3; i++)
+            {
+                var service = services[i];
+                var isFeatured = i == 1;
+
+                <div class="service-card @(isFeatured ? "featured" : "")">
+                    @if (isFeatured)
+                    {
+                        <div class="badge">Most Popular</div>
+                    }
+
+                    <div class="service-icon">
+                        @{
+                            string icon = "✂️";
+                            string serviceName = service.Name ?? "";
+                            if (serviceName.Contains("Bath", StringComparison.OrdinalIgnoreCase))
+                            {
+                                icon = "🚿";
+                            }
+                            else if (serviceName.Contains("Nail", StringComparison.OrdinalIgnoreCase))
+                            {
+                                icon = "💅";
+                            }
+                            else if (serviceName.Contains("Spa", StringComparison.OrdinalIgnoreCase))
+                            {
+                                icon = "🛁";
+                            }
+                            else if (serviceName.Contains("Grooming", StringComparison.OrdinalIgnoreCase))
+                            {
+                                icon = "✨";
+                            }
+                            else if (serviceName.Contains("Dog", StringComparison.OrdinalIgnoreCase))
+                            {
+                                icon = "🐕";
+                            }
+                            else if (serviceName.Contains("Cat", StringComparison.OrdinalIgnoreCase))
+                            {
+                                icon = "🐈";
+                            }
+                        }
+                        <span>@icon</span>
+                    </div>
+
+                    <h3>@service.Name</h3>
+                    <p>@service.Category</p>
+
+                    <ul class="service-features">
+                        @if (service.Duration > 0)
+                        {
+                            <li>@service.Duration minutes</li>
+                        }
+                        else
+                        {
+                            <li>Expert care</li>
+                        }
+                    </ul>
+
+                    <div class="service-price">From $@service.Price.ToString("F2")</div>
+
+                    <a asp-controller="Service" asp-action="BookServices" asp-route-serviceId="@service.Id" class=" btn-small">Book Now</a>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="service-card">
+                <div class="service-icon">🐕</div>
+                <h3>Dog Grooming</h3>
+                <p>Complete grooming package</p>
+                <ul class="service-features">
+                    <li>Breed-specific haircuts</li>
+                    <li>De-shedding treatment</li>
+                    <li>Pawdicure & nail care</li>
+                </ul>
+                <div class="service-price">From $45</div>
+                <a asp-controller="Service" asp-action="BookServices" class="btn-small">Book Now</a>
+            </div>
+
+            <div class="service-card featured">
+                <div class="badge">Most Popular</div>
+                <div class="service-icon">🌟</div>
+                <h3>Deluxe Spa Package</h3>
+                <p>The ultimate pampering experience</p>
+                <ul class="service-features">
+                    <li>Aromatherapy bath</li>
+                    <li>Blueberry facial</li>
+                    <li>Paw balm treatment</li>
+                </ul>
+                <div class="service-price">$75</div>
+                <a asp-controller="Service" asp-action="BookServices" class="btn-small">Book Now</a>
+            </div>
+
+            <div class="service-card">
+                <div class="service-icon">🐈</div>
+                <h3>Cat Grooming</h3>
+                <p>Gentle grooming for cats</p>
+                <ul class="service-features">
+                    <li>Gentle brushing</li>
+                    <li>Nail clipping</li>
+                    <li>Sanitary trim</li>
+                </ul>
+                <div class="service-price">From $40</div>
+                <a asp-controller="Service" asp-action="BookServices" " class="btn-small">Book Now</a>
+            </div>
+        }
+    </div>
+
+    <div class="section-footer">
+        <a asp-controller="Service" asp-action="Services" class="btn-secondary">View All Services</a>
+    </div>
+</div>
+<div class="products-section">
+    <div class="section-header">
+        <h2>Premium Pet Products</h2>
+        <p>Top-quality grooming supplies and accessories</p>
+    </div>
+
+    <div class="products-grid">
+        @if (hasProducts && products.Any())
+        {
+            @foreach (var product in products)
+            {
+                <div class="product-card">
+                    <div class="product-image @(string.IsNullOrEmpty(product.ImageUrl) ? "placeholder" : "")">
+                        @if (!string.IsNullOrEmpty(product.ImageUrl))
+                        {
+                            <img src="/Images/@product.ImageUrl" alt="@product.Name">
+                        }
+                        else
+                        {
+                            <span>🛍️</span>
+                        }
+                    </div>
+
+                    <div class="product-category">Pet Supplies</div>
+
+                    <h3>@product.Name</h3>
+
+                    <p class="product-description">
+                        @if (!string.IsNullOrEmpty(product.Description) && product.Description.Length > 100)
+                        {
+                            @product.Description.Substring(0, 100)
+                
+                            <text>...</text>
+                        }
+                        else
+                        {
+                            @product.Description
+                        }
+                    </p>
+
+                    <div class="product-price">
+                        <span class="price">$@product.Price.ToString("F2")</span>
+                    </div>
+
+                    <div class="product-info">
+                        <span class="stock in-stock">In Stock</span>
+                        <span class="brand">@product.Brand</span>
+                    </div>
+
+                    <div class="product-actions">
+                        <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id" class="btn-small"> View Details</a>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="product-card">
+                <div class="product-image placeholder">
+                    <span>🛍️</span>
+                </div>
+                <div class="product-category">Grooming</div>
+                <h3>Premium Dog Shampoo</h3>
+                <p class="product-description">Gentle cleansing formula for healthy, shiny coat</p>
+                <div class="product-price">
+                    <span class="price">$24.99</span>
+                </div>
+                <div class="product-info">
+                    <span class="stock in-stock">In Stock</span>
+                    <span class="brand">Melody</span>
+                </div>
+                <div class="product-actions">
+                    <a href="/Products" class="btn-small">View Details</a>
+                    <button class="btn-small" onclick="addToCart(1)">Add to Cart</button>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image placeholder">
+                    <span>🛍️</span>
+                </div>
+                <div class="product-category">Accessories</div>
+                <h3>Pet Grooming Brush</h3>
+                <p class="product-description">Professional grooming brush for all coat types</p>
+                <div class="product-price">
+                    <span class="price">$19.99</span>
+                </div>
+                <div class="product-info">
+                    <span class="stock in-stock">In Stock</span>
+                    <span class="brand">Melody</span>
+                </div>
+                <div class="product-actions">
+                    <a href="/Products" class="btn-small">View Details</a>
+                    <button class="btn-small" onclick="addToCart(2)">Add to Cart</button>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image placeholder">
+                    <span>🛍️</span>
+                </div>
+                <div class="product-category">Health</div>
+                <h3>Dental Care Kit</h3>
+                <p class="product-description">Complete oral care set for healthy teeth</p>
+                <div class="product-price">
+                    <span class="price">$29.99</span>
+                </div>
+                <div class="product-info">
+                    <span class="stock in-stock">In Stock</span>
+                    <span class="brand">Melody</span>
+                </div>
+                <div class="product-actions">
+                    <a href="/Products" class="btn-small">View Details</a>
+                    <button class="btn-small" onclick="addToCart(3)">Add to Cart</button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="section-footer">
+        <a asp-controller="Product" asp-action="index" class="btn-secondary">Browse All Products</a>
+    </div>
+</div>
+
+
+<div class="process-section">
+    <div class="section-header">
+        <h2>How It Works</h2>
+        <p>Simple steps to a happier, cleaner pet</p>
+    </div>
+
+    <div class="process-steps">
+        <div class="step">
+            <div class="step-number">1</div>
+            <h3>Book Online</h3>
+            <p>Choose your preferred date and time with our easy booking system</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+            <div class="step-number">2</div>
+            <h3>Consultation</h3>
+            <p>Discuss your pet's needs with our expert groomers</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+            <div class="step-number">3</div>
+            <h3>Grooming</h3>
+            <p>Your pet enjoys a relaxing grooming session</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+            <div class="step-number">4</div>
+            <h3>Pick Up</h3>
+            <p>Collect your fresh, happy pet with a big smile!</p>
+        </div>
+    </div>
+</div>
+
+<div class="testimonial-section">
+    <div class="section-header">
+        <h2>What Pet Parents Say</h2>
+        <p>Join our family of satisfied customers</p>
+    </div>
+
+    <div class="testimonials">
+        @foreach (var testimonial in testimonials)
+        {
+            <div class="testimonial-card">
+                <div class="quote">"</div>
+                <p>@testimonial.Text</p>
+                <div class="testimonial-author">
+                    <div class="author-name">@testimonial.Name</div>
+                    <div class="author-pet">@testimonial.Pet</div>
+                </div>
+                <div class="stars">
+                    @for (int i = 0; i < testimonial.Rating; i++)
+                    {
+                        <span>★</span>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="cta-section">
+    <div class="cta-content">
+        <h2>Ready to Pamper Your Pet?</h2>
+        <p>Book your appointment today and let your pet experience the Melody difference</p>
+        <div class="cta-buttons">
+            <a asp-controller="Service" asp-action="BookServices" class="btn-primary btn-large">Book Now & Get 10% Off First Visit</a>
+            <a href="/Products" class="btn-secondary btn-large">Shop Our Products</a>
+        </div>
+        <div class="cta-note">Limited time offer for new customers</div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const carouselConfig = {
+            imageBasePath: '/images/',
+            imagePrefix: 'grooming',
+            imageExtension: '.png',
+            minImageNumber: 1,
+            maxImageNumber: 10,
+            fallbackImage: '/images/default-pet.png'
+        };
+
+        const carousel = {
+            items: [],
+            dots: [],
+            currentIndex: 0,
+            totalItems: 0,
+            autoSlide: null,
+            imageUrls: [],
+
+            async checkImageExists(url) {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => resolve(true);
+                    img.onerror = () => resolve(false);
+                    img.src = url;
+                });
+            },
+
+            async loadAvailableImages() {
+                const { imageBasePath, imagePrefix, imageExtension, minImageNumber, maxImageNumber, fallbackImage } = carouselConfig;
+                const availableImages = [];
+
+                for (let i = minImageNumber; i <= maxImageNumber; i++) {
+                    const imageUrl = `${imageBasePath}${imagePrefix}${i}${imageExtension}`;
+                    try {
+                        const exists = await this.checkImageExists(imageUrl);
+                        if (exists) {
+                            availableImages.push(imageUrl);
+                        } else {
+                            break;
+                        }
+                    } catch {
+                        break;
+                    }
+                }
+
+                if (availableImages.length === 0) {
+                    availableImages.push(fallbackImage);
+                }
+
+                this.imageUrls = availableImages;
+                return availableImages;
+            },
+
+            initCarouselItems() {
+                const carouselStack = document.querySelector('.carousel-stack');
+                const scrollDots = document.querySelector('.scroll-dots');
+
+                if (!carouselStack || !scrollDots) return;
+
+                carouselStack.innerHTML = '';
+                scrollDots.innerHTML = '';
+
+                this.imageUrls.forEach((imageUrl, index) => {
+                    const carouselItem = document.createElement('div');
+                    carouselItem.className = 'carousel-item';
+                    if (index === 0) carouselItem.classList.add('active');
+
+                    const img = document.createElement('img');
+                    img.src = imageUrl;
+                    img.alt = `Professional pet grooming service ${index + 1}`;
+                    img.loading = 'lazy';
+                    img.onerror = function() {
+                        this.style.display = 'none';
+                    };
+
+                    carouselItem.appendChild(img);
+                    carouselStack.appendChild(carouselItem);
+
+                    const dot = document.createElement('span');
+                    dot.className = 'scroll-dot';
+                    if (index === 0) dot.classList.add('active');
+                    dot.dataset.index = index;
+
+                    dot.addEventListener('click', () => this.goToIndex(index));
+                    scrollDots.appendChild(dot);
+                });
+
+                this.items = document.querySelectorAll('.carousel-item');
+                this.dots = document.querySelectorAll('.scroll-dot');
+                this.totalItems = this.items.length;
+            },
+
+            init() {
+                this.loadAvailableImages()
+                    .then(() => {
+                        if (this.imageUrls.length === 0) return;
+
+                        this.initCarouselItems();
+                        this.updatePositions();
+                        this.startAutoSlide();
+
+                        const container = document.querySelector('.scroll-carousel');
+                        if (container) {
+                            container.addEventListener('mouseenter', () => this.stopAutoSlide());
+                            container.addEventListener('mouseleave', () => this.startAutoSlide());
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error', error);
+                    });
+            },
+
+            updatePositions() {
+                this.items.forEach((item, index) => {
+                    item.classList.remove('active', 'prev', 'next');
+
+                    if (index === this.currentIndex) {
+                        item.classList.add('active');
+                    } else if (index === (this.currentIndex - 1 + this.totalItems) % this.totalItems) {
+                        item.classList.add('prev');
+                    } else if (index === (this.currentIndex + 1) % this.totalItems) {
+                        item.classList.add('next');
+                    }
+                });
+
+                if (this.dots) {
+                    this.dots.forEach((dot, index) => {
+                        dot.classList.toggle('active', index === this.currentIndex);
+                    });
+                }
+            },
+
+            moveUp() {
+                this.currentIndex = (this.currentIndex - 1 + this.totalItems) % this.totalItems;
+                this.updatePositions();
+            },
+
+            moveDown() {
+                this.currentIndex = (this.currentIndex + 1) % this.totalItems;
+                this.updatePositions();
+            },
+
+            goToIndex(index) {
+                if (index >= 0 && index < this.totalItems) {
+                    this.currentIndex = index;
+                    this.updatePositions();
+                }
+            },
+
+            startAutoSlide() {
+                this.stopAutoSlide();
+                this.autoSlide = setInterval(() => {
+                    this.moveDown();
+                }, 4000);
+            },
+
+            stopAutoSlide() {
+                if (this.autoSlide) {
+                    clearInterval(this.autoSlide);
+                    this.autoSlide = null;
+                }
+            }
+        };
+
+        carousel.init();
+
+        document.querySelectorAll('.btn-add-to-cart:not(:disabled)').forEach(button => {
+            button.addEventListener('click', function() {
+                const productId = this.dataset.productId;
+                if (productId) {
+                    addToCart(productId);
+                }
+            });
+        });
+
+        function addToCart(productId) {
+            const cartItem = {
+                productId: parseInt(productId),
+                quantity: 1
+            };
+
+            let cart = JSON.parse(localStorage.getItem('melodyCart') || '[]');
+
+            const existingItemIndex = cart.findIndex(item => item.productId === cartItem.productId);
+            if (existingItemIndex > -1) {
+                cart[existingItemIndex].quantity += 1;
+            } else {
+                cart.push(cartItem);
+            }
+
+            localStorage.setItem('melodyCart', JSON.stringify(cart));
+
+            showNotification('Product added to cart!', 'success');
+
+            updateCartCount();
+        }
+
+        function updateCartCount() {
+            const cart = JSON.parse(localStorage.getItem('melodyCart') || '[]');
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+            const cartIcons = document.querySelectorAll('.cart-count');
+            cartIcons.forEach(icon => {
+                icon.textContent = totalItems;
+                icon.style.display = totalItems > 0 ? 'inline' : 'none';
+            });
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 25px;
+                background: ${type === 'success' ? '#4CAF50' : '#f44336'};
+                color: white;
+                border-radius: 5px;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+                box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        updateCartCount();
+    });
+</script>

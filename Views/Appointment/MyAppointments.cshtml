@@ -1,0 +1,162 @@
+﻿
+@model List<Melody.Models.AppointmentVM>
+
+@{
+    ViewBag.Title = "My Appointments";
+
+    var pendingAppointments = Model
+        .Where(a => a.Status == null || a.Status.ToLower() == "pending")
+        .OrderBy(a => a.Date)
+        .ToList();
+
+    var requestingAppointments = Model
+        .Where(a => a.Status != null && a.Status.ToLower() == "requesting")
+        .OrderBy(a => a.Date)
+        .ToList();
+
+    var rejectedAppointments = Model
+        .Where(a => a.Status != null && a.Status.ToLower() == "declined")
+        .OrderBy(a => a.Date)
+        .ToList();
+
+    var successfulAppointments = Model
+        .Where(a => a.Status != null && a.Status.ToLower() == "successful")
+        .OrderByDescending(a => a.Date)
+        .ToList();
+
+}
+
+<p class="Appoint">My Appointments</p>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div id="notification" class="notificationSuccess">
+        @TempData["SuccessMessage"]
+    </div>
+
+    <script>
+        setTimeout(function() {
+            var note = document.getElementById('notification');
+            if(note) note.style.display = 'none';
+        }, 5000);
+    </script>
+}
+
+@if (!Model.Any())
+{
+    <p class="no-appointments">No appointments yet. Go to Book Now</p>
+}
+else
+{
+    @* Pending Appointments *@
+    @if (pendingAppointments.Any())
+    {
+        <h4 class="pending-title">Pending</h4>
+        <div class="calendar-grid">
+            @foreach (var a in pendingAppointments)
+            {
+                <div class="calendar-card">
+                    <div class="card-header">@a.ServiceName</div>
+                    <div class="card-time">Date: @a.Date?.ToString("dd.MM.yyyy")</div>
+                    <div class="card-time">Time: @a.Date?.ToString("HH:mm")</div>
+                    <div class="card-pet">Pet: @a.PetName</div>
+                    <div class="card-status">Status: Pending</div>
+                    @if (!string.IsNullOrEmpty(a.Notes))
+                    {
+                        <div class="card-notes">Notes: @a.Notes</div>
+                    }
+
+                    <div class="button-group">
+                        <a asp-action="EditAppointments" asp-route-id="@a.Id" class="btn-edit">Request Change</a>
+                        <form asp-action="DeleteAppointment" method="post" onsubmit="return confirm('Are you sure you want to delete this appointment?');">
+                            <input type="hidden" name="id" value="@a.Id" />
+                            <button type="submit" class="btn-trash">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @* Requesting Appointments *@
+    @if (requestingAppointments.Any())
+    {
+        <h4 class="requesting-title">Requesting</h4>
+        <div class="calendar-grid">
+            @foreach (var a in requestingAppointments)
+            {
+                <div class="calendar-card pending-card">
+                    <div class="card-header-request">@a.ServiceName</div>
+                    <div class="card-time">Date: @a.Date?.ToString("dd.MM.yyyy")</div>
+                    <div class="card-time">Time: @a.Date?.ToString("HH:mm")</div>
+                    <div class="card-pet">Pet: @a.PetName</div>
+                    <div class="card-status status-requesting">Status: @a.Status</div>
+
+                    <form asp-action="DeleteAppointment" method="post" onsubmit="return confirm('Are you sure you want to delete this appointment?');">
+                        <input type="hidden" name="id" value="@a.Id" />
+                        <button type="submit" class="btn-trash1">Cancel</button>
+                    </form>
+                </div>
+            }
+        </div>
+    }
+
+    @* Rejected Appointments *@
+    @if (rejectedAppointments.Any())
+    {
+        <h4 class="rejected-title">Rejected</h4>
+        <div class="calendar-grid">
+            @foreach (var a in rejectedAppointments)
+            {
+                <div class="calendar-card-rejected-card">
+                    <div class="card-header-reject">@a.ServiceName</div>
+                    <div class="card-time">Date: @a.Date?.ToString("dd.MM.yyyy")</div>
+                    <div class="card-time">Time: @a.Date?.ToString("HH:mm")</div>
+                    <div class="card-pet">Pet: @a.PetName</div>
+                    <div class="card-status status-rejected">Status: Rejected</div>
+                    @if (!string.IsNullOrEmpty(a.Notes))
+                    {
+                        <div class="card-notes">Notes: @a.Notes</div>
+                    }
+
+                    <div class="button-group">
+                        <form asp-action="DeleteAppointment" method="post" onsubmit="return confirm('Are you sure you want to delete this appointment?');">
+                            <input type="hidden" name="id" value="@a.Id" />
+                            <button type="submit" class="btn-trash">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @* Successful *@
+    @if (successfulAppointments.Any())
+    {
+        <h4 class="successful-title">Successful</h4>
+        <div class="calendar-grid-success">
+            @foreach (var a in successfulAppointments)
+            {
+                <div class="calendar-card-status-successful">
+                    <div class="card-header">@a.ServiceName</div>
+                    <div class="card-time">Date: @a.Date?.ToString("dd.MM.yyyy")</div>
+                    <div class="card-time">Time: @a.Date?.ToString("HH:mm")</div>
+                    <div class="card-pet">Pet: @a.PetName</div>
+                    <div class="card-status status-rejected">Status: Successful</div>
+                    @if (!string.IsNullOrEmpty(a.Notes))
+                    {
+                        <div class="card-notes">Notes: @a.Notes</div>
+                    }
+
+                    <div class="button-group">
+                        <form asp-action="DeleteAppointment" method="post" onsubmit="return confirm('Are you sure you want to delete this appointment?');">
+                            <input type="hidden" name="id" value="@a.Id" />
+                            <button type="submit" class="btn-trash">Delete</button>
+                        </form>
+                    </div>
+                </div>
+
+            }
+        </div>
+    }
+}

@@ -1,0 +1,98 @@
+﻿@model List<Product>
+
+@{
+    ViewBag.Title = "Manage Products";
+}
+
+<style>
+    .stock {
+        font-weight: 600;
+        font-size: 13px;
+    }
+
+        .stock.in {
+            color: #16a34a;
+        }
+
+        .stock.low {
+            color: #d97706;
+        }
+
+        .stock.out {
+            color: #dc2626;
+        }
+</style>
+
+<h2 class="manage-title">📦 Manage Products</h2>
+
+<!-- ===== SEARCH (AJAX) ===== -->
+<form class="manage-search" onsubmit="return false;">
+    <input id="searchBox"
+           placeholder="Search name / SKU" />
+
+    <button id="searchBtn" type="button">Search</button>
+
+    <a href="/ManageProducts/AddProduct" class="manage-add">➕ Add</a>
+</form>
+
+<!-- ===== TABLE CONTAINER ===== -->
+<div id="productTable">
+    @await Html.PartialAsync("_ManageProductTable", Model)
+</div>
+
+<script>
+    // ===============================
+    // 🔍 SEARCH (AJAX)
+    // ===============================
+    function loadProducts() {
+        const keyword = document.getElementById('searchBox').value;
+
+        fetch(`/ManageProducts/AjaxList?search=${encodeURIComponent(keyword)}`)
+            .then(res => res.text())
+            .then(html => {
+                document.getElementById('productTable').innerHTML = html;
+            });
+    }
+
+    document.getElementById('searchBtn')
+        .addEventListener('click', loadProducts);
+
+    document.getElementById('searchBox')
+        .addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                loadProducts();
+            }
+        });
+
+    // ===============================
+    // 🗑️ DELETE (AJAX) — Event Delegation
+    // ===============================
+    document.addEventListener('click', function (e) {
+
+        const btn = e.target.closest('.btn-delete');
+        if (!btn) return;
+
+        const id = btn.dataset.id;
+        if (!id) return;
+
+        if (!confirm('Delete this product?')) return;
+
+        fetch('/ManageProducts/Delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `id=${id}`
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) return;
+
+            // ✅ Remove row without refresh
+            const row = btn.closest('tr');
+            if (row) row.remove();
+        });
+    });
+</script>
+

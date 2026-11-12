@@ -1,0 +1,196 @@
+﻿@model List<Melody.Models.CartVM>
+
+@{
+    ViewBag.Title = "My Wishlist";
+}
+
+<style>
+    .wishlist-container {
+        max-width: 900px;
+        margin: 40px auto;
+    }
+
+    .wishlist-title {
+        font-size: 26px;
+        font-weight: 700;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .wishlist-empty {
+        padding: 40px;
+        text-align: center;
+        background: #f9fafb;
+        border-radius: 16px;
+        color: #6b7280;
+    }
+
+    .wishlist-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    }
+
+        .wishlist-table th {
+            background: #f9fafb;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            color: #6b7280;
+            padding: 14px;
+            text-align: left;
+        }
+
+        .wishlist-table td {
+            padding: 16px 14px;
+            border-top: 1px solid #eee;
+            vertical-align: middle;
+        }
+
+    .wishlist-product {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+        .wishlist-product img {
+            width: 70px;
+            height: 70px;
+            object-fit: cover;
+            border-radius: 12px;
+            background: #f3f4f6;
+        }
+
+    .wishlist-name {
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .wishlist-price {
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .wishlist-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .btn-cart {
+        background: #4f46e5;
+        color: #fff;
+        border: none;
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+        .btn-cart:hover {
+            background: #4338ca;
+        }
+
+    .btn-remove {
+        color: #dc2626;
+        font-size: 14px;
+        text-decoration: none;
+    }
+
+        .btn-remove:hover {
+            text-decoration: underline;
+        }
+
+    /* ✅ Razor-safe media query */
+    @@media (max-width: 640px) {
+        .wishlist-table thead {
+            display: none;
+        }
+
+        .wishlist-table tr {
+            display: block;
+            border-bottom: 1px solid #eee;
+        }
+
+        .wishlist-table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .wishlist-actions {
+            justify-content: flex-end;
+            width: 100%;
+        }
+    }
+</style>
+
+
+<div class="wishlist-container">
+
+    <div class="wishlist-title">
+        ❤️ My Wishlist
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="wishlist-empty">
+            Your wishlist is empty.<br />
+            Start adding products you love ❤️
+        </div>
+    }
+    else
+    {
+        <table class="wishlist-table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Price</th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="wishlist-product">
+                                <img src="~/images/@(string.IsNullOrEmpty(item.ImageUrl) ? "no-image.png" : item.ImageUrl)" />
+                                <div class="wishlist-name">
+                                    @item.ProductName
+                                </div>
+                            </div>
+                        </td>
+
+                        <td class="wishlist-price">
+                            RM @item.Price.ToString("F2")
+                        </td>
+
+                        <td>
+                            <div class="wishlist-actions">
+                                <form asp-action="MoveToCart" method="post">
+                                    <input type="hidden" name="productId" value="@item.ProductId" />
+                                    <button type="submit" class="btn-cart">
+                                        Add to Cart
+                                    </button>
+                                </form>
+
+                                <a asp-action="Remove"
+                                   asp-route-productId="@item.ProductId"
+                                   class="btn-remove">
+                                    Remove
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

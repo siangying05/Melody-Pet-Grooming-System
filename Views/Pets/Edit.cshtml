@@ -1,0 +1,102 @@
+﻿@model PetEditVM
+@{
+    ViewBag.Title = "Edit Pet";
+    Layout = "_Layout";
+}
+
+<a asp-controller="Pets" asp-action="MyPets" class="Back">Back</a>
+
+<h2>✏️ Edit Pet</h2>
+
+<form asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+
+    <input type="hidden" asp-for="Id" />
+    <div class="form-group">
+        <label asp-for="Name"></label>
+        <input asp-for="Name">
+        <span asp-validation-for="Name"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Type"></label>
+        <select asp-for="Type"
+                asp-items="Html.GetEnumSelectList<PetType>()"></select>
+    </div>
+    <div class="form-group">
+        <label asp-for="Breed"></label>
+        <input asp-for="Breed">
+    </div>
+    <div class="form-group">
+        <label asp-for="Age"></label>
+        <input asp-for="Age" type="number" min="0">
+    </div>
+    <button class="btn-profile primary">💾 Save</button>
+    <a asp-controller="Pets" asp-action="MyPets" class="btn-profile">Cancel</a>
+</form>
+<style>
+    /* Form container styling */
+    .form-group {
+        margin-bottom: 1.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+        /* Label styling */
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        /* Input field styling */
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group select {
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            max-width: 300px;
+        }
+
+        .form-group input[type="number"] {
+            width: 100px;
+        }
+
+        /* Focus state */
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        /* Validation error styling */
+        .form-group span[asp-validation-for] {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+
+        /* Error state for inputs */
+        .form-group input:invalid,
+        .form-group input.input-validation-error {
+            border-color: #dc3545;
+        }
+
+        /* Select dropdown styling */
+        .form-group select {
+            background-color: white;
+            cursor: pointer;
+            appearance: none;
+            padding-right: 2rem;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1rem;
+        }
+    }
+</style>

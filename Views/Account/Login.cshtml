@@ -1,0 +1,48 @@
+﻿@model LoginVM
+
+@{
+    ViewBag.Title = "Login";
+}
+@if (Model != null && !string.IsNullOrEmpty(Model.LockoutMessage))
+{
+    <div class="alert alert-warning">
+        @Model.LockoutMessage
+    </div>
+}
+
+<form class="form" method="post">
+    <label asp-for="Email"></label>
+    <input asp-for="Email" autofocus>
+    <span asp-validation-for="Email"></span>
+
+    <label asp-for="Password"></label>
+    <div class="password-wrapper">
+        <input asp-for="Password" id="passwordInput">
+        <span class="toggle-password" onclick="togglePassword()">
+            👁
+        </span>
+    </div>
+    <span asp-validation-for="Password"></span>
+    <br>
+    <label>
+        <input asp-for="RememberMe">Remember Me
+        <a class="resetpd" asp-controller="Account" asp-action="ResetPassword">Forgot Password</a>
+    </label>
+    <div class="captcha-container">
+        <label>Captcha:</label>
+        <input type="text" name="captcha" />
+        <img src="/Account/CaptchaImage" alt="captcha" id="captchaImg" />
+        <button type="button" class="refresh-btn" style="padding: 5px 5px;"
+                onclick="document.getElementById('captchaImg').src='/Account/CaptchaImage?'+Math.random()">
+            ↻
+        </button>
+    </div>
+
+    <section>
+        <button>Login</button>
+        <button type="reset">Reset</button>
+    </section>
+    <p class="rg">
+        Don't have an account yet? <a asp-controller="Account" asp-action="Register">Register</a>
+    </p>
+</form>

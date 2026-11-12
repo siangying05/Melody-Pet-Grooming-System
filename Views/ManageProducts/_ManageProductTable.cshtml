@@ -1,0 +1,80 @@
+﻿@model List<Product>
+@using Microsoft.EntityFrameworkCore
+@inject MelodyDB db
+
+@{
+    var productIds = Model.Select(p => p.Id).ToList();
+    var inventories = db.Inventories
+        .Where(i => productIds.Contains(i.ProductId))
+        .ToList();
+}
+
+<table class="manage-table">
+    <thead>
+        <tr>
+            <th>Image</th>
+            <th>Name</th>
+            <th>SKU</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var p in Model)
+        {
+            var inv = inventories.FirstOrDefault(i => i.ProductId == p.Id);
+            int qty = inv?.Quantity ?? 0;
+
+            <tr>
+                <td>
+                    <img src="~/images/@(string.IsNullOrEmpty(p.ImageUrl) ? "no-image.png" : p.ImageUrl)"
+                         style="width:60px; border-radius:8px" />
+                </td>
+                <td>@p.Name</td>
+                <td>@p.SKU</td>
+                <td>RM @p.Price.ToString("F2")</td>
+
+                <td>
+                    @if (qty > 10)
+                    {
+                        <span class="stock in">✔ @qty</span>
+                    }
+                    else if (qty > 0)
+                    {
+                        <span class="stock low">⚠ @qty</span>
+                    }
+                    else
+                    {
+                        <span class="stock out">✖ Out</span>
+                    }
+                </td>
+
+                <td>@(p.IsActive ? "Active" : "Inactive")</td>
+
+                <td>
+                    <!-- ✏️ Update -->
+                    <a href="/ManageProducts/UpdateProduct/@p.Id">
+                        Update
+                    </a>
+
+                    <!-- 🗑️ Delete (AJAX) -->
+                    <button type="button"
+                            class="btn-delete"
+                            data-id="@p.Id"
+                            style="background:none;
+                       border:none;
+                       color:#dc2626;
+                       cursor:pointer;
+                       padding:0;
+                       margin-left:8px;">
+                        Delete
+                    </button>
+                </td>
+
+
+            </tr>
+        }
+    </tbody>
+</table>
